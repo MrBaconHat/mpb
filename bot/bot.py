@@ -25,7 +25,7 @@ class MyBot(commands.Bot):
         ]
         for cog in cogs:
             try:
-                await self.load_extention(f"bot.cogs.{cog}")
+                await self.load_extension(f"bot.cogs.{cog}")
                 print(
                     Fore.GREEN + Style.BRIGHT +
                     f"[+] Successfully loaded: {cog}"
