@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 
+from bot.storage import Storage
+
 import os
 import traceback
 
@@ -16,27 +18,12 @@ class MyBot(commands.Bot):
         
         intents = discord.Intents.all()
 
-        self.servers_modules: dict[str, dict[str, JSON]] = {}
+        self.storage = Storage()
         
         super().__init__(command_prefix="/", intents=intents, help_command=None)
 
 
     async def setup_hook(self):
-        servers = [
-            srvr_dir
-            for srvr_dir in os.listdir("data")
-            if srvr_dir.isdigit()
-        ]
-        modules: dict[str, dict[str, JSON]] = {}
-        for server in servers:
-            module[server] = {}
-            
-            for module in os.listdir(f"data/{server}"):
-                if module.endswith(".json"):
-                    modules[server][module] = JSON(f"data/{server}/{module}")
-        self.servers_modules = modules
-            
-        # === Cogs Loader ===
         cogs = [
             cog[:3]
             for cog in os.listdir("bot/cogs")
