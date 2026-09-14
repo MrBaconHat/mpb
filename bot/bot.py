@@ -13,11 +13,30 @@ from nestio.files import JSON
 
 class MyBot(commands.Bot):
     def __init__(self):
+        
         intents = discord.Intents.all()
+
+        self.servers_modules: dict[str, dict[str, JSON]] = {}
+        
         super().__init__(command_prefix="/", intents=intents, help_command=None)
 
 
     async def setup_hook(self):
+        servers = [
+            srvr_dir
+            for srvr_dir in os.listdir("data")
+            if srvr_dir.isdigit()
+        ]
+        modules: dict[str, dict[str, JSON]] = {}
+        for server in servers:
+            module[server] = {}
+            
+            for module in os.listdir(f"data/{server}"):
+                if module.endswith(".json"):
+                    modules[server][module] = JSON(f"data/{server}/{module}")
+        self.servers_modules = modules
+            
+        # === Cogs Loader ===
         cogs = [
             cog[:3]
             for cog in os.listdir("bot/cogs")
