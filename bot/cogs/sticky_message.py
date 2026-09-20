@@ -28,10 +28,15 @@ class StickyMessage(commands.Cog):
         if not enabled:
             return
 
-        async with self.lock.setdefault(
+        lock = self.lock.setdefault(
             str(message.channel.id), 
             asyncio.Lock()
-        ):
+        )
+
+        if lock.locked():
+            return
+
+        async with lock:
             config = self.storage.get_module(
                 message.guild.id, 
                 self.INTERNAL_NAME, 
