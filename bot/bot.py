@@ -25,7 +25,7 @@ class MyBot(commands.Bot):
 
     async def setup_hook(self):
         cogs = [
-            cog[:3]
+            cog[:-3]
             for cog in os.listdir("bot/cogs")
             if cog.endswith(".py") and not cog.startswith("__")
         ]
