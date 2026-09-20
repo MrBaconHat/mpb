@@ -9,7 +9,8 @@ class Storage:
     def get_module(
         self,
         guild_id: int | str,
-        module: str
+        module: str,
+        type: str
     ) -> JSON:
         guild_id = str(guild_id)
         
@@ -20,6 +21,6 @@ class Storage:
             self.guild_modules[str(guild_id)] = guild
 
         if module not in guild:
-            guild[module] = JSON(f"data/{guild_id}/{module}")
+            guild[module] = JSON(f"data/{guild_id}/{module}/{type}.json")
 
         return guild[module]
