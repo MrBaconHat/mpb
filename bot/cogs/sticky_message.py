@@ -80,3 +80,7 @@ class StickyMessage(commands.Cog):
 
             except discord.Forbidden:
                 pass
+
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(StickyMessage(bot))
