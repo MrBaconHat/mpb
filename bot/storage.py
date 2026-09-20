@@ -20,7 +20,7 @@ class Storage:
         module: str
     ) -> bool:
         directory = Path(f"data/{guild_id}/{module}")
-        if not directory.is_dir:
+        if not directory.is_dir():
             return False
 
         json = JSON(f"data/{guild_id}/{module}/config.json")
