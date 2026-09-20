@@ -18,6 +18,9 @@ class StickyMessage(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        if message.author.id == self.bot.user.id:
+            return
+            
         if message.guild is None:
             return
 
