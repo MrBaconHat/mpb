@@ -47,16 +47,18 @@ class StickyMessage(commands.Cog):
             if channel_config is None:
                 return
 
-            channel_state = await state.get(str(message.channel.id))
+            last_message_id = await state.get(f"{message.channel.id}.last_message_id")
 
-            last_message_id = channel_state.get("last_message_id")
+            old_message = None
             if last_message_id:
+                if int(last_message_id) > message.id:
+                    return
+                    
                 try:
-                    old_message = await message.channel.fetch_message(last_message_id)
+                    old_message = await message.channel.fetch_message(int(last_message_id))
                 except (discord.NotFound, discord.Forbidden):
                     old_message = None
 
-            old_message = None
             if old_message:
                 try:
                     await old_message.delete()
@@ -65,7 +67,7 @@ class StickyMessage(commands.Cog):
 
             try:
                 new_message = await message.channel.send(channel_config.get("message"))
-                await state.set(f"{message.channel.id}.last_message_id", new_message.id)
+                await state.set(f"{message.channel.id}.last_message_id", str(new_message.id))
             
             except discord.NotFound:
                 await config.delete(str(message.channel.id))
