@@ -10,6 +10,24 @@ class StickyMessage(commands.Cog):
     MODULE_NAME = "Sticky Message"
     INTERNAL_NAME = "sticky_message"
     
+    CONFIGURATION = {
+        "channel": {
+            "type": discord.abc.GuildChannel,
+            "label": "Target Channel",
+            "channel_types": [discord.ChannelType.text],
+            "required": True
+        },
+        "message": {
+            "type": str,
+            "label": "Sticky Message Content",
+            "placeholder": "Enter your message...",
+            "min_length": 1,
+            "max_length": 2000,
+            "required": True
+        }
+    }
+
+    
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.storage = bot.storage
