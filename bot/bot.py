@@ -46,6 +46,8 @@ class MyBot(commands.Bot):
                 )
 
     async def on_ready(self):
+        await self.tree.sync()
+        
         print(
             Fore.GREEN + Style.BRIGHT +
             f"Successfully logged in as: {self.user.name} ({self.user.id})"
