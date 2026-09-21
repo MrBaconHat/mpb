@@ -84,6 +84,8 @@ class Module(commands.Cog):
         self, 
         i: discord.Interaction
     ):
+        await i.response.defer(ephemeral=True)
+        
         module = []
         module_config = {}
         module_files = {}
@@ -105,7 +107,7 @@ class Module(commands.Cog):
             module_config,
             module_files
         )
-        await i.response.send_message(view=view, ephemeral=True)
+        await i.followup.send(view=view, ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Module(bot))
