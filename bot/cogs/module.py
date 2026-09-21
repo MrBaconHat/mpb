@@ -9,6 +9,8 @@ from nestio.files import JSON
 
 class ModulePagination(ui.LayoutView):
     def __init__(self, modules: list, module_config: dict, module_files: dict):
+        super().__init__()
+
         self.modules = modules
         self.module_config = module_config
         self.module_files = module_files
