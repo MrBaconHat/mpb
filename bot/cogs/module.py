@@ -1,3 +1,5 @@
+import traceback
+
 import discord
 from discord import ui, app_commands
 from discord.ext import commands
@@ -19,7 +21,7 @@ class ModulePagination(ui.LayoutView):
         self.container = ui.Container()
         self.container.add_item(self.pages[self.current_page])
 
-        self.add_item(container)
+        self.add_item(self.container)
 
     
     def build_pages(self):
@@ -108,6 +110,14 @@ class Module(commands.Cog):
             module_files
         )
         await i.followup.send(view=view, ephemeral=True)
+
+
+    @modules.error
+    async def on_error(self, interaction, error):
+        traceback.print_exception(
+            type(error), error, error.__traceback__
+        )
+        
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Module(bot))
