@@ -51,7 +51,7 @@ class ModulePagination(ui.LayoutView):
         self.add_item(self.pages[self.current_page])
     
     async def toggle_button_callback(self, interaction: discord.Interaction):
-        custom_id = self.custom_id
+        custom_id = interaction.data["custom_id"]
         module_name = custom_id.split(":")[1]
 
         config = self.module_files[module_name]
