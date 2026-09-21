@@ -20,10 +20,7 @@ class ModulePagination(ui.LayoutView):
 
         self.build_pages()
 
-        self.container = ui.Container()
-        self.container.add_item(self.pages[self.current_page])
-
-        self.add_item(self.container)
+        self.add_item(self.pages[self.current_page])
 
     
     def build_pages(self):
@@ -50,10 +47,8 @@ class ModulePagination(ui.LayoutView):
             self.pages.append(container)
     
     def update_page(self):
-        self.container.clear_items()
-        self.container.add_item(
-            self.pages[self.current_page]
-        )
+        self.clear_items()
+        self.add_item(self.pages[self.current_page])
     
     async def toggle_button_callback(self, interaction: discord.Interaction):
         custom_id = self.custom_id
