@@ -37,8 +37,12 @@ class ModulePagination(ui.LayoutView):
             )
             module_toggle_button.callback = self.toggle_button_callback
 
+            container.add_item(ui.TextDisplay("# Configuration"))
+
+            container.add_item(ui.Separator())
+
             toggle_section = ui.Section(
-                f"{cog.MODULE_NAME}",
+                f"### {cog.MODULE_NAME}",
                 accessory=module_toggle_button
             )
 
