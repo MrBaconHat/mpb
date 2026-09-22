@@ -8,6 +8,8 @@ from cachetools import TTLCache
 
 class StickyMessage(commands.Cog):
     MODULE_NAME = "Sticky Message"
+    MODULE_DESCRIPTION = "Keep a message at the bottom of a channel."
+    
     INTERNAL_NAME = "sticky_message"
     
     CONFIGURATION = {
