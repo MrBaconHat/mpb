@@ -1,6 +1,7 @@
 import asyncio
 
 import discord
+from discord import ui
 from discord.ext import commands
 
 from cachetools import TTLCache
@@ -14,18 +15,21 @@ class StickyMessage(commands.Cog):
     
     CONFIGURATION = {
         "channel": {
-            "type": discord.abc.GuildChannel,
-            "label": "Target Channel",
-            "channel_types": [discord.ChannelType.text],
-            "required": True
+            "text": "Channel to send the sticky message in",
+            "modal": lambda: ui.ChannelSelect(
+                channel_types=[discord.ChannelType.text],
+                required=True
+            )
         },
         "message": {
-            "type": str,
-            "label": "Sticky Message Content",
-            "placeholder": "Enter your message...",
-            "min_length": 1,
-            "max_length": 2000,
-            "required": True
+            "text": "Sticky Message Content",
+            "modal": lambda: ui.TextInput(
+                style=discord.TextStyle.paragraph,
+                placeholder="Enter your message...",
+                min_length=1,
+                max_length=2000,
+                required=True
+            )
         }
     }
 
