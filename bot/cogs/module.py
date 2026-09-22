@@ -42,7 +42,7 @@ class ModulePagination(ui.LayoutView):
             container.add_item(ui.Separator())
 
             toggle_section = ui.Section(
-                f"### {cog.MODULE_NAME}",
+                f"### {cog.MODULE_NAME}\n-# {cog.MODULE_DESCRIPTION}",
                 accessory=module_toggle_button
             )
 
