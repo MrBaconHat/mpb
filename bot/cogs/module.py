@@ -32,7 +32,7 @@ class ModulePagination(ui.LayoutView):
             config = self.module_config.get(cog.INTERNAL_NAME, {})
             is_enabled = config.get("is_enabled", False)
             module_toggle_button = ui.Button(
-                label="Enable" if not is_enabled else "Disable",
+                emoji="<:toggle_off:1552010483710689391>" if not is_enabled else "<:toggle_on:1552010109285175356>",
                 custom_id=f"toggle:{cog.INTERNAL_NAME}"
             )
             module_toggle_button.callback = self.toggle_button_callback
