@@ -34,6 +34,19 @@ class StickyMessage(commands.Cog):
 
         self.lock = TTLCache(maxsize=100, ttl=60)
 
+
+    def _format_config_data(
+        self,
+        channel: discord.TextChannel,
+        message: str
+    ):
+        return {
+            str(channel.id): {
+                "message": message
+            }
+        }
+    
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.id == self.bot.user.id:
