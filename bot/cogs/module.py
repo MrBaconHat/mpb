@@ -134,4 +134,4 @@ class ModuleManagement(commands.Cog):
         
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(Module(bot))
+    await bot.add_cog(ModuleManagement(bot))
