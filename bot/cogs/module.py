@@ -72,7 +72,7 @@ class ModulePagination(ui.LayoutView):
         await interaction.response.edit_message(view=self)
         
 
-class Module(commands.Cog):
+class ModuleManagement(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.storage = bot.storage
