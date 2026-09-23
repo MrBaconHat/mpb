@@ -150,7 +150,6 @@ class ModuleView(ui.LayoutView):
 
         self.module_config[module_name] = await config.get() or {}
 
-        await self.build_pages()
         await self.update_page()
 
         await interaction.response.edit_message(view=self)
@@ -169,7 +168,6 @@ class ModuleView(ui.LayoutView):
         else:
             self.selected_page = value
 
-        await self.build_pages()
         await self.update_page()
 
         await interaction.response.edit_message(view=self)
