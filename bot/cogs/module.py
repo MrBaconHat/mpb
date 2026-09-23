@@ -39,8 +39,9 @@ class ModuleView(ui.LayoutView):
         self.pages: dict[str, list[ui.Item]] = {}
         self.selected_page = None
 
+        self.page_size = 22
         self.min = 0
-        self.max = 22  # Account for < and >
+        self.max = self.page_size  # Account for < and >
 
     
     async def initialize(self):
@@ -158,12 +159,12 @@ class ModuleView(ui.LayoutView):
         value = interaction.data["values"][0]
 
         if value == "back":
-            self.min -= 22
-            self.max -= 22
+            self.min -= self.page_size
+            self.max -= self.page_size
 
         elif value == "forward":
-            self.min += 22
-            self.max += 22
+            self.min += self.page_size
+            self.max += self.page_size
 
         else:
             self.selected_page = value
