@@ -20,7 +20,7 @@ class Module(commands.Cog):
         return None        
 
 
-class ModulePagination(ui.LayoutView):
+class ModuleView(ui.LayoutView):
     def __init__(self, modules: list, module_config: dict, module_files: dict):
         super().__init__()
 
