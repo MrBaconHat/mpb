@@ -155,9 +155,7 @@ class ModuleView(ui.LayoutView):
         await interaction.response.edit_message(view=self)
 
     async def select_menu_callback(self, interaction: discord.Interaction):
-        print("select callback")
         value = interaction.data["values"][0]
-        print("value:", value)
 
         if value == "back":
             self.min -= 22
