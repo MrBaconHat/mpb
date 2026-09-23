@@ -4,44 +4,26 @@ import discord
 from discord import ui
 from discord.ext import commands
 
+from bot.cogs.module import Module
+
 from cachetools import TTLCache
 
 
-class StickyMessage(commands.Cog):
-    MODULE_NAME = "Sticky Message"
-    MODULE_DESCRIPTION = "Keep a message at the bottom of a channel."
-    
-    INTERNAL_NAME = "sticky_message"
-    
-    CONFIGURATION = {
-        "channel": {
-            "text": "Channel to send the sticky message in",
-            "modal": lambda: ui.ChannelSelect(
-                channel_types=[discord.ChannelType.text],
-                required=True
-            )
-        },
-        "message": {
-            "text": "Sticky Message Content",
-            "modal": lambda: ui.TextInput(
-                style=discord.TextStyle.paragraph,
-                placeholder="Enter your message...",
-                min_length=1,
-                max_length=2000,
-                required=True
-            )
-        }
-    }
-
-    
+class StickyMessage(Module):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.storage = bot.storage
 
         self.lock = TTLCache(maxsize=100, ttl=60)
 
+        super().__init__(
+            module_name="Sticky Message",
+            module_description="Keep a message at the bottom of a channel.",
+            internal_name="sticky_message"
+        )
 
-    def _format_config_data(
+
+    def format_config_data(
         self,
         channel: discord.TextChannel,
         message: str
@@ -51,6 +33,12 @@ class StickyMessage(commands.Cog):
                 "message": message
             }
         }
+
+    async def build_config_page(
+        self,
+        guild_id: str | int
+    ) -> list[ui.Item] | None:
+        return None
     
 
     @commands.Cog.listener()
