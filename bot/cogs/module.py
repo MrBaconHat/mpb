@@ -13,7 +13,7 @@ class Module(commands.Cog):
         self.MODULE_DESCRIPTION = module_description
         self.INTERNAL_NAME = internal_name
 
-    def build_config_page(
+    async def build_config_page(
         self,
         guild_id: str | int
     ) -> list[ui.Item] | None:
