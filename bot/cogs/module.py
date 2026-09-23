@@ -7,6 +7,19 @@ from discord.ext import commands
 from nestio.files import JSON
 
 
+class Module(commands.Cog):
+    def __init__(self, module_name: str, module_description: str, internal_name: str):
+        self.MODULE_NAME = module_name
+        self.MODULE_DESCRIPTION = module_description
+        self.INTERNAL_NAME = internal_name
+
+    def build_config_page(
+        self,
+        guild_id: str | int
+    ) -> list[ui.Item] | None:
+        return None        
+
+
 class ModulePagination(ui.LayoutView):
     def __init__(self, modules: list, module_config: dict, module_files: dict):
         super().__init__()
