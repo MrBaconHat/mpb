@@ -59,7 +59,7 @@ class ConfigMenu(ui.LayoutView):
                 style=discord.ButtonStyle.gray, 
                 custom_id=f"sm_view:{channel}"
             )
-            # view_button.callback = ...
+            view_button.callback = self.view_btn_callback
 
             container.add_item(
                 ui.Section(
@@ -148,6 +148,51 @@ class ConfigMenu(ui.LayoutView):
             traceback.print_exception(
                 type(e), e, e.__traceback__
             )
+
+    async def view_sm_page(self, channel_id: int):
+        self.clear_items()
+        
+        sm = await self.config.get(str(channel_id), None)
+        if sm is None:
+            raise KeyError(channel_id)
+
+        container = ui.Container()
+
+        async def go_back_btn_callback(i: discord.Interaction):
+            await self.parent_view.update_page()
+            await i.response.edit_message(view=self.parent_view)
+
+        go_back_btn = ui.Button(
+            label="<-",
+            style=discord.ButtonStyle.gray
+        )
+        go_back_btn.callback = go_back_btn_callback
+        
+        container.add_item(
+            ui.ActionRow(
+                go_back_btn
+            )
+        )
+
+        container.add_item(
+            ui.TextDisplay(
+                f"<#{channel_id}>"
+            )
+        )
+
+        self.add_item(container)
+
+    async def view_btn_callback(
+        self,
+        i: discord.Interaction
+    ):
+        print("View Button")
+        custom_id = i.data["custom_id"]
+        channel_id = custom_id.split(":", 2)[1]
+        print(custom_id, channel_id)
+
+        await self.view_sm_page(int(channel_id))
+        await i.response.edit_message(view=self)
 
 
 class StickyMessage(Module):
