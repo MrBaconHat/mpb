@@ -29,7 +29,9 @@ class ConfigMenu(ui.LayoutView):
         config = await self.config.get() or {}
         
         container = ui.Container()
-        for channel, message in config:
+        for channel, message in config.items():
+            if channel == "is_enabled":
+                continue
 
             view_button = ui.Button(
                 label="View",
