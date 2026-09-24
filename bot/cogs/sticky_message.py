@@ -37,15 +37,9 @@ class ConfigMenu(ui.LayoutView):
         
         container = ui.Container()
         container.add_item(
-            ui.Section(
-                ui.TextDisplay(f"### Sticky Messages List"),
-                accessory=ui.Button(
-                    label=f"{len(config)}/{self.max_sm}",
-                    style=discord.ButtonStyle.gray,
-                    disabled=True
-                )
-            )
+            ui.TextDisplay(f"### Sticky Messages List")
         )
+        
         for channel, message in config.items():
             try:
                 message = message["message"]
