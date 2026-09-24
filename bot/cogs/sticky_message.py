@@ -36,6 +36,11 @@ class ConfigMenu(ui.LayoutView):
             if channel == "is_enabled":
                 continue
 
+            try:
+                message = message["message"]
+            except KeyError:
+                continue
+
             view_button = ui.Button(
                 label="View",
                 style=discord.ButtonStyle.gray, 
