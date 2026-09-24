@@ -73,12 +73,14 @@ class StickyMessage(Module):
         view = ConfigMenu(int(guild_id), self)
         await view.initialize()
 
-        print(view.children)
-        
-        return [
-            item
-            for item in view.children
-        ]
+        items = []
+
+        for item in view.children:
+            if isinstance(item, ui.Container):
+                for component in item.children:
+                    items.append(component)
+
+        return items
     
 
     @commands.Cog.listener()
