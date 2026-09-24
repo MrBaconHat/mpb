@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 
 import discord
 from discord import ui
@@ -29,6 +30,11 @@ class ConfigMenu(ui.LayoutView):
 
 
     async def initialize(self):
+        await self.config_page()
+
+    async def config_page(self):
+        self.clear_items()
+        
         config = await self.config.get() or {}
         try:
             del config["is_enabled"]
@@ -67,7 +73,9 @@ class ConfigMenu(ui.LayoutView):
             label="Add",
             disabled=len(config) >= self.max_sm
         )
-        # add_button.callback = ...
+        add_button.callback = self.add_sm_button_callback
+        print("CALLBACK:", add_button.callback)
+        
         limit_indicator_button = ui.Button(
             label=f"{len(config)}/{self.max_sm}",
             style=discord.ButtonStyle.gray,
@@ -89,6 +97,58 @@ class ConfigMenu(ui.LayoutView):
         container.add_item(danger_zone)
 
         self.add_item(container)
+
+
+    async def add_sm_button_callback(
+        self, 
+        i: discord.Interaction
+    ):
+        try:
+            modal = ui.Modal(
+                title="Add Sticky Message"
+            )
+
+            channel_select = ui.ChannelSelect(
+                channel_types=[discord.ChannelType.text],
+                placeholder="Select a channel...",
+                required=True
+            )
+            print("channel select")
+            message = ui.TextInput(
+                label="Sticky Message Content",
+                placeholder="Sticky message to send...",
+                required=True
+            )
+            print("message")
+
+            modal.add_item(
+                ui.Label(
+                    text="Sticky Channel",
+                    component=channel_select,
+                    description="Channel to send the sticky message in."
+                )
+            )
+            modal.add_item(message)
+
+            async def on_submit(i: discord.Interaction):
+                channel = channel_select.values[0]
+                message_content = message.value
+
+                await self.config.set(
+                    f"{str(channel.id)}.message", message_content
+                )
+
+                await self.config_page()
+                await i.response.edit_message(view=self)
+
+            modal.on_submit = on_submit
+
+            await i.response.send_modal(modal)
+
+        except Exception as e:
+            traceback.print_exception(
+                type(e), e, e.__traceback__
+            )
 
 
 class StickyMessage(Module):
