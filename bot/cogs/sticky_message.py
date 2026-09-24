@@ -20,16 +20,16 @@ class ConfigMenu(ui.LayoutView):
 
         self.bot = self.module.bot
         self.storage = self.bot.storage
+        self.config = self.storage.get_module(str(self.guild_id), self.module.INTERNAL_NAME, "config")
 
         self.max_sm = 5
 
 
     async def initialize(self):
-        config_data = await self.storage.get_module(str(self.guild_id), self.module.INTERNAL_NAME, "config")
-
-        container = ui.Container()
+        config = await self.config.get() or {}
         
-        for channel, message in config_data.items():
+        container = ui.Container()
+        for channel, message in config:
 
             view_button = ui.Button(
                 label="View",
