@@ -65,9 +65,14 @@ class StickyMessage(Module):
         self,
         guild_id: str | int
     ) -> list[ui.Item] | None:
+        view = ConfigMenu(int(guild_id), self)
+        await view.initialize()
+
+        print(view.children)
+        
         return [
             item
-            for item in ConfigMenu(int(guild_id), self).children
+            for item in view.children
         ]
     
 
