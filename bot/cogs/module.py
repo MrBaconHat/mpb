@@ -16,9 +16,10 @@ class Module(commands.Cog):
     
     async def build_config_page(
         self,
-        guild_id: str | int
-    ) -> list[ui.Item] | None:
-        return None        
+        guild_id: str | int,
+        parent_view
+    ) -> list[ui.Item]:
+        return [] 
 
 
 class ModuleView(ui.LayoutView):
@@ -128,7 +129,10 @@ class ModuleView(ui.LayoutView):
             components.append(toggle_section)
             components.append(ui.Separator())
 
-            module_components = await module.build_config_page(self.guild_id) or []
+            module_components = await module.build_config_page(
+                self.guild_id,
+                self
+            )
             for ui_item in module_components:
                 components.append(ui_item)
 

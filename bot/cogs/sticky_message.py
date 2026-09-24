@@ -14,10 +14,12 @@ class ConfigMenu(ui.LayoutView):
     def __init__(
         self,
         guild_id: int,
-        module: Module
+        module: Module,
+        parent_view
     ):
         self.guild_id = guild_id 
         self.module = module
+        self.parent_view = parent_view
 
         self.bot = self.module.bot
         self.storage = self.bot.storage
@@ -74,7 +76,6 @@ class ConfigMenu(ui.LayoutView):
             disabled=len(config) >= self.max_sm
         )
         add_button.callback = self.add_sm_button_callback
-        print("CALLBACK:", add_button.callback)
         
         limit_indicator_button = ui.Button(
             label=f"{len(config)}/{self.max_sm}",
@@ -113,13 +114,11 @@ class ConfigMenu(ui.LayoutView):
                 placeholder="Select a channel...",
                 required=True
             )
-            print("channel select")
             message = ui.TextInput(
                 label="Sticky Message Content",
                 placeholder="Sticky message to send...",
                 required=True
             )
-            print("message")
 
             modal.add_item(
                 ui.Label(
@@ -138,8 +137,8 @@ class ConfigMenu(ui.LayoutView):
                     f"{str(channel.id)}.message", message_content
                 )
 
-                await self.config_page()
-                await i.response.edit_message(view=self)
+                await self.parent_view.update_page()
+                await i.response.edit_message(view=self.parent_view)
 
             modal.on_submit = on_submit
 
@@ -166,9 +165,10 @@ class StickyMessage(Module):
 
     async def build_config_page(
         self,
-        guild_id: str | int
-    ) -> list[ui.Item] | None:
-        view = ConfigMenu(int(guild_id), self)
+        guild_id: str | int,
+        parent_view
+    ) -> list[ui.Item]:
+        view = ConfigMenu(int(guild_id), self, parent_view)
         await view.initialize()
 
         items = []
