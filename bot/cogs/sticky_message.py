@@ -20,9 +20,12 @@ class ConfigMenu(ui.LayoutView):
 
         self.bot = self.module.bot
         self.storage = self.bot.storage
+        
         self.config = self.storage.get_module(str(self.guild_id), self.module.INTERNAL_NAME, "config")
 
         self.max_sm = 5
+
+        super().__init__()
 
 
     async def initialize(self):
