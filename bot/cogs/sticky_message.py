@@ -66,6 +66,24 @@ class ConfigMenu(ui.LayoutView):
                 )
             )
 
+        # Danger Zone
+        add_button = ui.Button(
+            label="Add",
+            disabled=len(config) >= self.max_sm
+        )
+        # add_button.callback = ...
+        limit_indicator_button = ui.Button(
+            label=f"{len(config)}/{self.max_sm}",
+            style=discord.ButtonStyle.gray,
+            disabled=True
+        )
+
+        delete_all_button = ui.Button(
+            label="Delete All",
+            style=discord.ButtonStyle.red
+        )
+        # delete_all_button.callback = ... 
+
         self.add_item(container)
 
 
