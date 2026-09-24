@@ -9,6 +9,45 @@ from bot.cogs.module import Module
 from cachetools import TTLCache
 
 
+class ConfigMenu(ui.LayoutView):
+    def __init__(
+        self,
+        guild_id: int,
+        module: Module
+    ):
+        self.guild_id = guild_id 
+        self.module = module
+
+        self.bot = self.module.bot
+        self.storage = self.bot.storage
+
+        self.max_sm = 5
+
+
+    async def initialize(self):
+        config_data = await self.storage.get_module(str(self.guild_id), self.module.INTERNAL_NAME, "config")
+
+        container = ui.Container()
+        
+        for channel, message in config_data.items():
+
+            view_button = ui.Button(
+                label="View",
+                style=discord.ButtonStyle.gray, 
+                custom_id=f"sm_view:{channel}"
+            )
+            # view_button.callback = ...
+
+            container.add_item(
+                ui.Section(
+                    f"<#{channel}>\n-# {message if len(message) < 70 else f'{message[:70]}...'}",
+                    accessory=view_button
+                )
+            )
+
+        self.add_item(container)
+
+
 class StickyMessage(Module):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -38,7 +77,10 @@ class StickyMessage(Module):
         self,
         guild_id: str | int
     ) -> list[ui.Item] | None:
-        return None
+        return [
+            item
+            for item in ConfigMenu(int(guild_id), self).children
+        ]
     
 
     @commands.Cog.listener()
