@@ -61,18 +61,6 @@ class StickyMessage(Module):
             internal_name="sticky_message"
         )
 
-
-    def format_config_data(
-        self,
-        channel: discord.TextChannel,
-        message: str
-    ):
-        return {
-            str(channel.id): {
-                "message": message
-            }
-        }
-
     async def build_config_page(
         self,
         guild_id: str | int
