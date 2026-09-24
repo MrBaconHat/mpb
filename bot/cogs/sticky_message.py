@@ -32,6 +32,9 @@ class ConfigMenu(ui.LayoutView):
         config = await self.config.get() or {}
         
         container = ui.Container()
+        container.add_item(
+            ui.TextDisplay(f"### Sticky Messages List")
+        )
         for channel, message in config.items():
             if channel == "is_enabled":
                 continue
@@ -50,7 +53,7 @@ class ConfigMenu(ui.LayoutView):
 
             container.add_item(
                 ui.Section(
-                    f"<#{channel}>\n-# {message if len(message) < 70 else f'{message[:70]}...'}",
+                    f"<#{channel}>\n-# **╰┈➤ {message if len(message) < 70 else f'{message[:70]}...'}**",
                     accessory=view_button
                 )
             )
