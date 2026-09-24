@@ -30,15 +30,16 @@ class ConfigMenu(ui.LayoutView):
 
     async def initialize(self):
         config = await self.config.get() or {}
+        try:
+            del config["is_enabled"]
+        except KeyError:
+            pass
         
         container = ui.Container()
         container.add_item(
             ui.TextDisplay(f"### Sticky Messages List")
         )
         for channel, message in config.items():
-            if channel == "is_enabled":
-                continue
-
             try:
                 message = message["message"]
             except KeyError:
