@@ -5,6 +5,8 @@ import discord
 from discord import ui
 from discord.ext import commands
 
+from datetime import datetime, timezone
+
 from bot.cogs.module import Module
 
 from cachetools import TTLCache
@@ -201,6 +203,8 @@ class StickyMessage(Module):
         self.storage = bot.storage
 
         self.lock = TTLCache(maxsize=100, ttl=60)
+        self.debounce = 3
+        self.guild_channel_debounce = TTLCache(maxsize=1000, ttl=60)
 
         super().__init__(
             module_name="Sticky Message",
@@ -247,6 +251,7 @@ class StickyMessage(Module):
         )
 
         if lock.locked():
+            self.guild_channel_debounce[str(message.channel.id)] = datetime.now(timezone.utc)
             return
 
         async with lock:
@@ -282,6 +287,10 @@ class StickyMessage(Module):
                     await old_message.delete()
                 except (discord.NotFound, discord.Forbidden):
                     pass
+
+            while True:
+                if datetime.now(timezone.utc) - self.guild_channel_debounce[str(message.channel.id)] > self.debounce:
+                    break
 
             try:
                 new_message = await message.channel.send(channel_config.get("message"))
