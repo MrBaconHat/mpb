@@ -39,11 +39,7 @@ class ConfigMenu(ui.LayoutView):
     async def config_page(self):
         self.clear_items()
         
-        config = await self.config.get() or {}
-        try:
-            del config["is_enabled"]
-        except KeyError:
-            pass
+        config = await self.config.get("channels", {})
         
         container = ui.Container()
         container.add_item(
@@ -136,7 +132,7 @@ class ConfigMenu(ui.LayoutView):
                 message_content = message.value
 
                 await self.config.set(
-                    f"{str(channel.id)}.message", message_content
+                    f"channels.{str(channel.id)}.message", message_content
                 )
 
                 await self.parent_view.update_page()
