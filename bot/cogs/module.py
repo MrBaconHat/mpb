@@ -188,6 +188,7 @@ class ModuleManagement(commands.Cog):
         description="Lists all the modules bot has to offer."
     )
     @app_commands.guild_only()
+    @app_commands.checks.has_permissions(administrator=True)
     async def modules(
         self, 
         i: discord.Interaction
