@@ -267,22 +267,14 @@ class StickyMessage(Module):
                 return
 
             last_message_id = await state.get(f"channels.{message.channel.id}.last_message_id")
+            if int(last_message_id) > message.id:
+                return
 
-            old_message = None
-            if last_message_id:
-                if int(last_message_id) > message.id:
-                    return
-                    
-                try:
-                    old_message = await message.channel.fetch_message(int(last_message_id))
-                except (discord.NotFound, discord.Forbidden):
-                    old_message = None
+            try:
+                message.channel.delete_messages([discord.Object(id=last_message_id)])
 
-            if old_message:
-                try:
-                    await old_message.delete()
-                except (discord.NotFound, discord.Forbidden):
-                    pass
+            except (discord.Forbidden, discord.NotFound):
+                pass
 
             while True:
                 timer = self.guild_channel_debounce.get(
