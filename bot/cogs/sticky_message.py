@@ -201,6 +201,7 @@ class StickyMessage(Module):
         self.lock = TTLCache(maxsize=100, ttl=60)
         self.debounce = 3
         self.guild_channel_debounce = TTLCache(maxsize=1000, ttl=60)
+        self.channel_last_message = TTLCache(maxsize=10000, ttl=500)
 
         super().__init__(
             module_name="Sticky Message",
@@ -269,7 +270,7 @@ class StickyMessage(Module):
             if channel_config is None:
                 return
 
-            last_message_id = await state.get(f"channels.{message.channel.id}.last_message_id")
+            last_message_id = self.channel_last_message.get(str(message.channel.id)) or await state.get(f"channels.{message.channel.id}.last_message_id")
             if int(last_message_id) > message.id:
                 return
 
@@ -298,6 +299,7 @@ class StickyMessage(Module):
             try:
                 new_message = await message.channel.send(channel_config.get("message"))
                 await state.set(f"{message.channel.id}.last_message_id", str(new_message.id))
+                self.channel_last_message[str(message.channel.id)] = new_message.id
             
             except discord.NotFound:
                 await config.delete(str(message.channel.id))
