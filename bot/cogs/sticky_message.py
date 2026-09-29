@@ -289,8 +289,20 @@ class StickyMessage(Module):
                     pass
 
             while True:
-                if datetime.now(timezone.utc) - self.guild_channel_debounce[str(message.channel.id)] > self.debounce:
+                timer = self.guild_channel_debounce.get(
+                    str(message.channel.id)
+                )
+
+                if timer is None:
                     break
+
+                elapsed = datetime.now(timezone.utc) - timer
+                remaining = self.debounce - elapsed.total_seconds()
+
+                if remaining <= 0:
+                    break
+
+                await asyncio.sleep(remaining)
 
             try:
                 new_message = await message.channel.send(channel_config.get("message"))
