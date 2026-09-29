@@ -229,13 +229,14 @@ class StickyMessage(Module):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        print("message sent")
         if message.author.id == self.bot.user.id:
             return
             
         if message.guild is None:
             return
 
-        if not isinstance(message, discord.TextChannel):
+        if not isinstance(message.channel, discord.TextChannel):
             return
 
         enabled = await self.storage.is_enabled(
@@ -275,7 +276,9 @@ class StickyMessage(Module):
                 return
 
             try:
-                message.channel.delete_messages([discord.Object(id=last_message_id)])
+                old_message = message.channel.get_partial_message(int(last_message_id))
+
+                await old_message.delete()
 
             except (discord.Forbidden, discord.NotFound):
                 pass
