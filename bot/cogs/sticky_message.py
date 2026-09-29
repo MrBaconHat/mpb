@@ -27,6 +27,7 @@ class ConfigMenu(ui.LayoutView):
         self.storage = self.bot.storage
         
         self.config = self.storage.get_module(str(self.guild_id), self.module.INTERNAL_NAME, "config")
+        self.settings_cache = {}
 
         self.max_sm = 5
 
@@ -39,18 +40,14 @@ class ConfigMenu(ui.LayoutView):
     async def config_page(self):
         self.clear_items()
         
-        config = await self.config.get() or {}
-        try:
-            del config["is_enabled"]
-        except KeyError:
-            pass
+        config = await self.config.get("channels", {})
         
         container = ui.Container()
         container.add_item(
             ui.TextDisplay(f"### Sticky Messages List")
         )
         
-        for channel, message in config.items():
+        for i, (channel, message) in enumerate(config.get("channels", {}).items()):
             try:
                 message = message["message"]
             except KeyError:
@@ -59,16 +56,16 @@ class ConfigMenu(ui.LayoutView):
             view_button = ui.Button(
                 label="View",
                 style=discord.ButtonStyle.gray, 
-                custom_id=f"sm_view:{channel}"
+                custom_id=f"sm_view:{channel}:{i}"
             )
             view_button.callback = self.view_btn_callback
 
-            container.add_item(
-                ui.Section(
-                    f"<#{channel}>\n-# **╰┈➤ {message if len(message) < 70 else f'{message[:70]}...'}**",
-                    accessory=view_button
-                )
+            channel_section = ui.Section(
+                f"<#{channel}>\n-# **╰┈➤ {message if len(message) < 70 else f'{message[:70]}...'}**",
+                accessory=view_button
             )
+            container.add_item(channel_section)
+            self.settings_cache[str(channel)] = channel_section
 
         # ======= Danger Zone ========
         container.add_item(ui.Separator())
@@ -136,7 +133,7 @@ class ConfigMenu(ui.LayoutView):
                 message_content = message.value
 
                 await self.config.set(
-                    f"{str(channel.id)}.message", message_content
+                    f"channels.{str(channel.id)}.message", message_content
                 )
 
                 await self.parent_view.update_page()
