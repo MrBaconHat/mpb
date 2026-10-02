@@ -154,6 +154,11 @@ class ConfigMenu(ui.LayoutView):
         if sm is None:
             raise KeyError(channel_id)
 
+        try:
+            message = sm["message"]
+        except KeyError:
+            return
+
         container = ui.Container()
 
         async def go_back_btn_callback(i: discord.Interaction):
@@ -172,9 +177,16 @@ class ConfigMenu(ui.LayoutView):
             )
         )
 
+        # --- Sticky Message Info ---
         container.add_item(
             ui.TextDisplay(
-                f"<#{channel_id}>"
+                f"## <#{channel_id}>"
+            )
+        )
+        container.add_item(
+            ui.TextDisplay(
+                "**Message:**\n"
+                f"-# **╰┈➤{message if len(message) < 200 else f'{message[:200]}...'}**"
             )
         )
 
