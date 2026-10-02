@@ -271,7 +271,7 @@ class StickyMessage(Module):
             if channel_config is None:
                 return
 
-            last_message_id = self.channel_last_message.get(str(message.channel.id)) or await state.get(f"{message.channel.id}.last_message_id")
+            last_message_id = self.channel_last_message.get(str(message.channel.id)) or await state.get(f"{message.channel.id}.last_message_id", 0)
             if int(last_message_id) > message.id:
                 return
 
