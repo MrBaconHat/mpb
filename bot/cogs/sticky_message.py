@@ -150,7 +150,7 @@ class ConfigMenu(ui.LayoutView):
     async def view_sm_page(self, channel_id: int):
         self.clear_items()
         
-        sm = await self.config.get(str(channel_id), None)
+        sm = await self.config.get(f"channels.{channel_id}", None)
         if sm is None:
             raise KeyError(channel_id)
 
