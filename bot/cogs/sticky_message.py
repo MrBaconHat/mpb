@@ -46,6 +46,13 @@ class ConfigMenu(ui.LayoutView):
             ui.TextDisplay(f"### Sticky Messages List")
         )
 
+        if len(config) <= 0:
+            container.add_item(
+                ui.TextDisplay(
+                    "-# There are no sticky message set."
+                )
+            )
+
         for channel, message in config.items():
             try:
                 message = message["message"]
@@ -85,7 +92,7 @@ class ConfigMenu(ui.LayoutView):
             label="Delete All",
             style=discord.ButtonStyle.red
         )
-        # delete_all_button.callback = ... 
+        delete_all_button.callback = self.delete_all_sm_btn_callback
 
         danger_zone = ui.ActionRow(
             add_button,
@@ -149,6 +156,11 @@ class ConfigMenu(ui.LayoutView):
             traceback.print_exception(
                 type(e), e, e.__traceback__
             )
+
+    async def delete_all_sm_btn_callback(self, interaction: discord.Interaction):
+        await self.config.delete("channels")
+        await self.parent_view.update_page()
+        await interaction.response.edit_message(view=self.parent_view)
 
     async def view_sm_page(self, channel_id: int):
         self.clear_items()

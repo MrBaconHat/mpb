@@ -1,11 +1,3 @@
 {
-    "is_enabled": true,
-    "channels": {
-        "1551186863061074030": {
-            "message": "this is a sticky message. test test editing the message..."
-        },
-        "1552693341634822154": {
-            "message": "ez chelow kebab broooo"
-        }
-    }
+    "is_enabled": true
 }
