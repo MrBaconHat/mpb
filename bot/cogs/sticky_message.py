@@ -227,36 +227,22 @@ class ConfigMenu(ui.LayoutView):
             modal.add_item(message)
 
             async def edit_sm_modal_callback(i: discord.Interaction):
-                print("sm edit modal callback")
                 custom_id = i.data["custom_id"]
-                print("custom id:", custom_id)
 
                 old_channel_id = int(custom_id.split(":")[1])
-                print("Old Channel:", old_channel_id)
                 new_channel_id = channel_select.values[0].id
-                print("New Channel:", new_channel_id)
                 new_message = message.value
-                print("New Message:", new_message)
-
-                print(old_channel_id, new_channel_id, new_message)
 
                 await self.config.set(
                     f"channels.{new_channel_id}.message",
                     new_message
                 )
-                print("changes saved")
 
                 if old_channel_id != new_channel_id:
                     await self.config.delete(f"channels.{old_channel_id}")
-                    print("old channel deleted")
 
-                print("view sm page")
                 await self.view_sm_page(int(new_channel_id))
-                print("built the new sm page.. editing the message")
                 await i.response.edit_message(view=self)
-                print("edited")
-                
-
 
             modal.on_submit = edit_sm_modal_callback
 
@@ -305,10 +291,8 @@ class ConfigMenu(ui.LayoutView):
         self,
         i: discord.Interaction
     ):
-        print("View Button")
         custom_id = i.data["custom_id"]
         channel_id = custom_id.split(":", 2)[1]
-        print(custom_id, channel_id)
 
         await self.view_sm_page(int(channel_id))
         await i.response.edit_message(view=self)
