@@ -50,6 +50,14 @@ class ModuleView(ui.LayoutView):
         await self.render_page()
 
 
+    def get_selected_module(self) -> Module | None:
+        for module in self.modules:
+            if module.INTERNAL_NAME == self.selected_page:
+                return module
+
+        return None
+
+
     def build_select_menu(self) -> ui.Select:
         options = []
 
@@ -91,6 +99,23 @@ class ModuleView(ui.LayoutView):
         select.callback = self.select_menu_callback
         
         return select
+
+    def build_toggle_button(self, module: Module):
+        config = self.module_config.get(module.INTERNAL_NAME, {})
+        
+        is_enabled = config.get("is_enabled", False)
+        module_toggle_button = ui.Button(
+            emoji="<:toggle_off:1552010483710689391>" if not is_enabled else "<:toggle_on:1552010109285175356>",
+            custom_id=f"toggle:{module.INTERNAL_NAME}"
+        )
+        module_toggle_button.callback = self.toggle_button_callback
+
+        toggle_section = ui.Section(
+            f"### {module.MODULE_NAME}\n-# {getattr(module, 'MODULE_DESCRIPTION', 'No description')}",
+            accessory=module_toggle_button
+        )
+
+        return toggle_section
     
 
     async def build_pages(self):
@@ -98,23 +123,6 @@ class ModuleView(ui.LayoutView):
         
         for module in self.modules:
             components: list[ui.Item] = []
-
-            config = self.module_config.get(module.INTERNAL_NAME, {})
-
-            is_enabled = config.get("is_enabled", False)
-            module_toggle_button = ui.Button(
-                emoji="<:toggle_off:1552010483710689391>" if not is_enabled else "<:toggle_on:1552010109285175356>",
-                custom_id=f"toggle:{module.INTERNAL_NAME}"
-            )
-            module_toggle_button.callback = self.toggle_button_callback
-
-            toggle_section = ui.Section(
-                f"### {module.MODULE_NAME}\n-# {getattr(module, 'MODULE_DESCRIPTION', 'No description')}",
-                accessory=module_toggle_button
-            )
-
-            components.append(toggle_section)
-            components.append(ui.Separator())
 
             module_components = await module.build_config_page(
                 self.guild_id,
@@ -146,6 +154,15 @@ class ModuleView(ui.LayoutView):
             ui.ActionRow(self.build_select_menu())
         )
 
+        module = self.get_selected_module()
+
+        if module:
+            container.add_item(
+                self.build_toggle_button(module)
+            )
+
+        container.add_item(ui.Separator())
+
         if self.selected_page:
             for item in self.pages[self.selected_page]:
                 container.add_item(item)
@@ -165,7 +182,7 @@ class ModuleView(ui.LayoutView):
 
         self.module_config[module_name] = await config.get() or {}
 
-        await self.update_page()
+        await self.render_page()
 
         await interaction.response.edit_message(view=self)
 
@@ -183,7 +200,7 @@ class ModuleView(ui.LayoutView):
         else:
             self.selected_page = value
 
-        await self.update_page()
+        await self.render_page()
 
         await interaction.response.edit_message(view=self)
         
