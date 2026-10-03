@@ -241,7 +241,8 @@ class ConfigMenu(ui.LayoutView):
                 placeholder="Sticky message to send...",
                 required=True,
                 min_length=10,
-                max_length=1000
+                max_length=1000,
+                default=message
             )
 
             modal.add_item(
