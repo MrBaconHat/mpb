@@ -26,7 +26,12 @@ class ConfigMenu(ui.LayoutView):
         self.bot = self.module.bot
         self.storage = self.bot.storage
 
-        self.config = self.storage.get_module(str(self.guild_id), self.module.INTERNAL_NAME, "config")
+        self.config = self.storage.get_module(
+            str(self.guild_id), self.module.INTERNAL_NAME, "config"
+        )
+        self.state = self.storage.get_module(
+            str(self.guild_id), self.module.INTERNAL_NAME, "state"
+        )
 
         self.max_sm = 5  # Max sticky messages per guild
 
@@ -160,6 +165,10 @@ class ConfigMenu(ui.LayoutView):
 
     async def delete_all_sm_btn_callback(self, interaction: discord.Interaction):
         await self.config.delete("channels")
+        channels = await self.state.get()
+        for channel in channels:
+            await self.state.delete(channel)
+            
         await self.parent_view.update_page()
         await interaction.response.edit_message(view=self.parent_view)
 
@@ -258,6 +267,9 @@ class ConfigMenu(ui.LayoutView):
 
                 if old_channel_id != new_channel_id:
                     await self.config.delete(f"channels.{old_channel_id}")
+                    last_message_id = await self.state.get(str(old_channel_id))
+                    await self.state.set(str(new_channel_id), last_message_id)
+                    await self.state.delete(str(old_channel_id))
 
                 await self.view_sm_page(int(new_channel_id))
                 await i.response.edit_message(view=self)
@@ -276,6 +288,7 @@ class ConfigMenu(ui.LayoutView):
 
             try:
                 await self.config.delete(f"channels.{channel_id}")
+                await self.state.delete(str(channel_id))
             except KeyError:
                 pass
 
