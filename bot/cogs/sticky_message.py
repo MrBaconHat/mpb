@@ -90,7 +90,8 @@ class ConfigMenu(ui.LayoutView):
 
         delete_all_button = ui.Button(
             label="Delete All",
-            style=discord.ButtonStyle.red
+            style=discord.ButtonStyle.red,
+            disabled=len(config) <= 0
         )
         delete_all_button.callback = self.delete_all_sm_btn_callback
 
