@@ -462,7 +462,7 @@ class StickyMessage(Module):
                 self.channel_last_message[str(message.channel.id)] = new_message.id
 
             except discord.NotFound:
-                await config.delete(str(message.channel.id))
+                await config.delete(f"channels.{str(message.channel.id)}")
                 await state.delete(str(message.channel.id))
 
             except discord.Forbidden:
