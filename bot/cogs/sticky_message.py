@@ -114,8 +114,11 @@ class ConfigMenu(ui.LayoutView):
             )
             message = ui.TextInput(
                 label="Sticky Message Content",
+                style=discord.TextStyle.paragraph,
                 placeholder="Sticky message to send...",
-                required=True
+                required=True,
+                min_length=10,
+                max_length=1000
             )
 
             modal.add_item(
@@ -212,9 +215,11 @@ class ConfigMenu(ui.LayoutView):
             )
             message = ui.TextInput(
                 label="Sticky Message Content",
+                style=discord.TextStyle.paragraph,
                 placeholder="Sticky message to send...",
                 required=True,
-                default=message
+                min_length=10,
+                max_length=1000
             )
 
             modal.add_item(
