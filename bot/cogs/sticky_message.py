@@ -11,6 +11,8 @@ from bot.cogs.module import Module
 
 from cachetools import TTLCache
 
+from copy import deepcopy
+
 
 class ConfigMenu(ui.LayoutView):
     def __init__(
@@ -33,32 +35,52 @@ class ConfigMenu(ui.LayoutView):
             str(self.guild_id), self.module.INTERNAL_NAME, "state"
         )
 
+        self.sm_chnl_cache = {}
+        self.sm_chnl_state = {}
+
         self.max_sm = 5  # Max sticky messages per guild
 
         super().__init__()
 
 
     async def initialize(self):
+        self.sm_chnl_cache = await self.config.get("channels", {})
+        self.sm_chnl_state = await self.state.get() or {}
+        
         await self.config_page()
+
+    async def sm_save(self, channel_id: int, message: str):
+        await self.config.set(f"channels.{channel_id}.message", message)
+        self.sm_chnl_cache[str(channel_id)] = {"message": message}
+
+    async def sm_delete(self, channel_id: int):
+        try:
+            await self.config.delete(f"channels.{channel_id}")
+            await self.state.delete(str(channel_id))
+        except KeyError:
+            pass
+                
+        self.sm_chnl_cache.pop(str(channel_id), None)
+        self.sm_chnl_state.pop(str(channel_id), None)
 
     async def config_page(self):
         self.clear_items()
 
-        config = await self.config.get("channels", {})
+        sticky_msgs = deepcopy(self.sm_chnl_cache)
 
         container = ui.Container()
         container.add_item(
             ui.TextDisplay(f"### Sticky Messages List")
         )
 
-        if len(config) <= 0:
+        if len(sticky_msgs) <= 0:
             container.add_item(
                 ui.TextDisplay(
                     "-# There are no sticky message set."
                 )
             )
 
-        for channel, message in config.items():
+        for channel, message in sticky_msgs.items():
             try:
                 message = message["message"]
             except KeyError:
@@ -83,12 +105,12 @@ class ConfigMenu(ui.LayoutView):
 
         add_button = ui.Button(
             label="Add",
-            disabled=len(config) >= self.max_sm
+            disabled=len(sticky_msgs) >= self.max_sm
         )
         add_button.callback = self.add_sm_button_callback
 
         limit_indicator_button = ui.Button(
-            label=f"{len(config)}/{self.max_sm}",
+            label=f"{len(sticky_msgs)}/{self.max_sm}",
             style=discord.ButtonStyle.gray,
             disabled=True
         )
@@ -96,7 +118,7 @@ class ConfigMenu(ui.LayoutView):
         delete_all_button = ui.Button(
             label="Delete All",
             style=discord.ButtonStyle.red,
-            disabled=len(config) <= 0
+            disabled=len(sticky_msgs) <= 0
         )
         delete_all_button.callback = self.delete_all_sm_btn_callback
 
@@ -147,10 +169,7 @@ class ConfigMenu(ui.LayoutView):
                 channel = channel_select.values[0]
                 message_content = message.value
 
-                await self.config.set(
-                    f"channels.{str(channel.id)}.message", message_content
-                )
-
+                await self.sm_save(channel.id, message_content)
                 await self.parent_view.update_page()
                 await i.response.edit_message(view=self.parent_view)
 
@@ -165,9 +184,13 @@ class ConfigMenu(ui.LayoutView):
 
     async def delete_all_sm_btn_callback(self, interaction: discord.Interaction):
         await self.config.delete("channels")
-        channels = await self.state.get()
+        
+        channels = deepcopy(self.sm_chnl_state)
         for channel in channels:
             await self.state.delete(channel)
+
+        self.sm_chnl_cache = {}
+        self.sm_chnl_state = {}
             
         await self.parent_view.update_page()
         await interaction.response.edit_message(view=self.parent_view)
@@ -175,7 +198,7 @@ class ConfigMenu(ui.LayoutView):
     async def view_sm_page(self, channel_id: int):
         self.clear_items()
 
-        sm = await self.config.get(f"channels.{channel_id}", None)
+        sm = self.sm_chnl_cache.get(str(channel_id))
         if sm is None:
             raise KeyError(channel_id)
 
@@ -220,9 +243,7 @@ class ConfigMenu(ui.LayoutView):
             custom_id = interaction.data["custom_id"]
 
             channel_id = custom_id.split(":")[1]
-            message = await self.config.get(
-                f"channels.{channel_id}.message"
-            )
+            message = self.sm_chnl_cache.get(str(channel_id), {}).get("message")
 
             modal = ui.Modal(
                 title="Edit Sticky Message",
@@ -261,16 +282,12 @@ class ConfigMenu(ui.LayoutView):
                 new_channel_id = channel_select.values[0].id
                 new_message = message.value
 
-                await self.config.set(
-                    f"channels.{new_channel_id}.message",
-                    new_message
-                )
+                await self.sm_save(new_channel_id, new_message)
 
                 if old_channel_id != new_channel_id:
-                    await self.config.delete(f"channels.{old_channel_id}")
                     last_message_id = await self.state.get(str(old_channel_id))
                     await self.state.set(str(new_channel_id), last_message_id)
-                    await self.state.delete(str(old_channel_id))
+                    await self.sm_delete(old_channel_id)
 
                 await self.view_sm_page(int(new_channel_id))
                 await i.response.edit_message(view=self)
@@ -288,8 +305,7 @@ class ConfigMenu(ui.LayoutView):
             channel_id = custom_id.split(":")[1]
 
             try:
-                await self.config.delete(f"channels.{channel_id}")
-                await self.state.delete(str(channel_id))
+                await self.sm_delete(int(channel_id))
             except KeyError:
                 pass
 
