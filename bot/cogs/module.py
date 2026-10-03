@@ -47,20 +47,7 @@ class ModuleView(ui.LayoutView):
     
     async def initialize(self):
         await self.build_pages()
-
-        container = ui.Container()
-
-        container.add_item(
-            ui.ActionRow(
-                self.build_select_menu()
-            )
-        )
-
-        if self.selected_page:
-            for item in self.pages[self.selected_page]:
-                container.add_item(item)
-
-        self.add_item(container)
+        await self.render_page()
 
 
     def build_select_menu(self) -> ui.Select:
@@ -138,9 +125,33 @@ class ModuleView(ui.LayoutView):
 
             self.pages[module.INTERNAL_NAME] = components
 
-    async def update_page(self):
+    
+    async def update_module_page(self, view: ui.LayoutView):
+        items = []
+
+        for child in view.children:
+            if isinstance(child, ui.Container):
+                items.extend(child.children)
+
+        self.pages[self.selected_page] = items
+        await self.render_page()
+
+    
+    async def render_page(self):
         self.clear_items()
-        await self.initialize()   
+
+        container = ui.Container()
+
+        container.add_item(
+            ui.ActionRow(self.build_select_menu())
+        )
+
+        if self.selected_page:
+            for item in self.pages[self.selected_page]:
+                container.add_item(item)
+
+        self.add_item(container)
+
     
     async def toggle_button_callback(self, interaction: discord.Interaction):
         custom_id = interaction.data["custom_id"]

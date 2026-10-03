@@ -46,7 +46,7 @@ class ConfigMenu(ui.LayoutView):
     async def initialize(self):
         self.sm_chnl_cache = await self.config.get("channels", {})
         self.sm_chnl_state = await self.state.get() or {}
-        
+
         await self.config_page()
 
     async def sm_save(self, channel_id: int, message: str):
@@ -59,7 +59,7 @@ class ConfigMenu(ui.LayoutView):
             await self.state.delete(str(channel_id))
         except KeyError:
             pass
-                
+
         self.sm_chnl_cache.pop(str(channel_id), None)
         self.sm_chnl_state.pop(str(channel_id), None)
 
@@ -170,7 +170,8 @@ class ConfigMenu(ui.LayoutView):
                 message_content = message.value
 
                 await self.sm_save(channel.id, message_content)
-                await self.parent_view.update_page()
+                await self.config_page()
+                await self.parent_view.update_module_page(self)
                 await i.response.edit_message(view=self.parent_view)
 
             modal.on_submit = on_submit
@@ -184,15 +185,16 @@ class ConfigMenu(ui.LayoutView):
 
     async def delete_all_sm_btn_callback(self, interaction: discord.Interaction):
         await self.config.delete("channels")
-        
+
         channels = deepcopy(self.sm_chnl_state)
         for channel in channels:
             await self.state.delete(channel)
 
         self.sm_chnl_cache = {}
         self.sm_chnl_state = {}
-            
-        await self.parent_view.update_page()
+
+        await self.config_page()
+        await self.parent_view.update_module_page(self)
         await interaction.response.edit_message(view=self.parent_view)
 
     async def view_sm_page(self, channel_id: int):
@@ -210,7 +212,8 @@ class ConfigMenu(ui.LayoutView):
         container = ui.Container()
 
         async def go_back_btn_callback(i: discord.Interaction):
-            await self.parent_view.update_page()
+            await self.config_page()
+            await self.parent_view.update_module_page(self)
             await i.response.edit_message(view=self.parent_view)
 
         go_back_btn = ui.Button(
@@ -309,7 +312,8 @@ class ConfigMenu(ui.LayoutView):
             except KeyError:
                 pass
 
-            await self.parent_view.update_page()
+            await self.config_page()
+            await self.parent_view.update_module_page(self)
             await interaction.response.edit_message(view=self.parent_view)
 
         edit_sm_btn = ui.Button(
