@@ -244,7 +244,8 @@ class ConfigMenu(ui.LayoutView):
 
             if old_channel_id != new_channel_id:
                 last_message_id = await self.state.get(str(old_channel_id))
-                await self.state.set(str(new_channel_id), last_message_id)
+                if last_message_id:
+                    await self.state.set(str(new_channel_id), last_message_id)
                 await self.sm_delete(old_channel_id)
 
             await self.config_page()
