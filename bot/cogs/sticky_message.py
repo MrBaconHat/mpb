@@ -137,80 +137,69 @@ class ConfigMenu(ui.LayoutView):
         self, 
         i: discord.Interaction
     ):
-        try:
-            modal = ui.Modal(
-                title="Add Sticky Message"
+        modal = ui.Modal(
+            title="Add Sticky Message"
+        )
+
+        channel_select = ui.ChannelSelect(
+            channel_types=[discord.ChannelType.text],
+            placeholder="Select a channel...",
+            required=True
+        )
+        message = ui.TextInput(
+            label="Sticky Message Content",
+            style=discord.TextStyle.paragraph,
+            placeholder="Sticky message to send...",
+            required=True,
+            min_length=10,
+            max_length=1000
+        )
+
+        modal.add_item(
+            ui.Label(
+                text="Sticky Channel",
+                component=channel_select,
+                description="Channel to send the sticky message in."
             )
+        )
+        modal.add_item(message)
 
-            channel_select = ui.ChannelSelect(
-                channel_types=[discord.ChannelType.text],
-                placeholder="Select a channel...",
-                required=True
-            )
-            message = ui.TextInput(
-                label="Sticky Message Content",
-                style=discord.TextStyle.paragraph,
-                placeholder="Sticky message to send...",
-                required=True,
-                min_length=10,
-                max_length=1000
-            )
+        async def on_submit(i: discord.Interaction):
+            channel = channel_select.values[0]
+            message_content = message.value
 
-            modal.add_item(
-                ui.Label(
-                    text="Sticky Channel",
-                    component=channel_select,
-                    description="Channel to send the sticky message in."
-                )
-            )
-            modal.add_item(message)
+            await self.sm_save(channel.id, message_content)
+            await self.config_page()
+            await self.parent_view.update_module_page(self)
+            await i.response.edit_message(view=self.parent_view)
 
-            async def on_submit(i: discord.Interaction):
-                channel = channel_select.values[0]
-                message_content = message.value
+        modal.on_submit = on_submit
 
-                await self.sm_save(channel.id, message_content)
-                await self.config_page()
-                await self.parent_view.update_module_page(self)
-                await i.response.edit_message(view=self.parent_view)
+        await i.response.send_modal(modal)
 
-            modal.on_submit = on_submit
-
-            await i.response.send_modal(modal)
-
-        except Exception as e:
-            traceback.print_exception(
-                type(e), e, e.__traceback__
-            )
-
+    
     async def delete_sm_btn_callback(self, interaction: discord.Interaction):
-        print("delete sm btn pressed")
         sticky_messages = deepcopy(self.sm_chnl_cache)
 
         modal = ui.Modal(
             title="Delete Sticky Message"
         )
-        print("modal built")
 
         sm_select = ui.CheckboxGroup(
             min_values=1,
             max_values=len(sticky_messages)
         )
-        print("select built")
 
         for channel_id, data in sticky_messages.items():
-            print(channel_id)
             message = data["message"]
 
             channel = None
             try:
                 channel = self.bot.get_channel(int(channel_id)) or await self.bot.fetch_channel(int(channel_id))
             except (discord.NotFound, discord.Forbidden):
-                print("channel couldnt be found")
                 continue
 
             if channel is None:
-                print("channel is none")
                 continue
 
             sm_select.add_option(
@@ -218,7 +207,6 @@ class ConfigMenu(ui.LayoutView):
                 default=False,
                 value=channel_id
             )
-            print("option added")
 
         modal.add_item(
             ui.Label(
@@ -226,18 +214,15 @@ class ConfigMenu(ui.LayoutView):
                 component=sm_select
             )
         )
-        print("menu added")
 
         # === Modal's Callback ===
         async def on_sm_delete_modal_submit(interaction: discord.Interaction):
             selected_sms = sm_select.values
             for chnl_id in selected_sms:
-                print("Channel ID:", chnl_id)
                 try:
                     await self.sm_delete(chnl_id)
 
                 except KeyError:
-                    print("key error")
                     continue
 
             await self.config_page()
@@ -246,16 +231,8 @@ class ConfigMenu(ui.LayoutView):
                 
 
         modal.on_submit = on_sm_delete_modal_submit
-        print("on submitted added")
 
-        try:
-            await interaction.response.send_modal(modal)
-            print("modal sent")
-        except Exception as e:
-            traceback.print_exception(
-                type(e), e, e.__traceback__
-            )
-        
+        await interaction.response.send_modal(modal)
 
     async def edit_sm_button_callback(self, interaction: discord.Interaction):
         custom_id = interaction.data["custom_id"]
@@ -353,7 +330,6 @@ class StickyMessage(Module):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        print("message sent")
         if message.author.id == self.bot.user.id:
             return
 
