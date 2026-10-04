@@ -184,27 +184,33 @@ class ConfigMenu(ui.LayoutView):
             )
 
     async def delete_sm_btn_callback(self, interaction: discord.Interaction):
+        print("delete sm btn pressed")
         sticky_messages = deepcopy(self.sm_chnl_cache)
 
         modal = ui.Modal(
             title="Delete Sticky Message"
         )
+        print("modal built")
 
         sm_select = ui.CheckboxGroup(
             min_values=1,
             max_values=len(sticky_messages)
         )
+        print("select built")
 
         for channel_id, data in sticky_messages.items():
+            print(channel_id)
             message = data["message"]
 
             channel = None
             try:
                 channel = self.bot.get_channel(int(channel_id)) or await self.bot.fetch_channel(int(channel_id))
             except (discord.NotFound, discord.Forbidden):
+                print("channel couldnt be found")
                 continue
 
             if channel is None:
+                print("channel is none")
                 continue
 
             sm_select.add_option(
@@ -212,21 +218,26 @@ class ConfigMenu(ui.LayoutView):
                 default=False,
                 value=channel_id
             )
+            print("option added")
 
-        modal.add_item(sm_select)
+        modal.add_item(
+            ui.Label(
+                text="Sticky messages to delete",
+                component=sm_select
+            )
+        )
+        print("menu added")
 
         # === Modal's Callback ===
         async def on_sm_delete_modal_submit(interaction: discord.Interaction):
             selected_sms = sm_select.values
             for chnl_id in selected_sms:
+                print("Channel ID:", chnl_id)
                 try:
-                    await self.config.delete(f"channels.{chnl_id}")
-                    await self.state.delete(chnl_id)
-
-                    self.sm_chnl_cache.pop(chnl_id, None)
-                    self.sm_chnl_state.pop(chnl_id, None)
+                    await self.sm_delete(chnl_id)
 
                 except KeyError:
+                    print("key error")
                     continue
 
             await self.config_page()
@@ -235,8 +246,15 @@ class ConfigMenu(ui.LayoutView):
                 
 
         modal.on_submit = on_sm_delete_modal_submit
+        print("on submitted added")
 
-        await interaction.response.send_modal(modal)
+        try:
+            await interaction.response.send_modal(modal)
+            print("modal sent")
+        except Exception as e:
+            traceback.print_exception(
+                type(e), e, e.__traceback__
+            )
         
 
     async def edit_sm_button_callback(self, interaction: discord.Interaction):
