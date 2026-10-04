@@ -87,11 +87,11 @@ class ConfigMenu(ui.LayoutView):
                 continue
 
             view_button = ui.Button(
-                label="View",
+                label="Edit",
                 style=discord.ButtonStyle.gray, 
-                custom_id=f"sm_view:{channel}"
+                custom_id=f"sm_edit:{channel}"
             )
-            view_button.callback = self.view_btn_callback
+            view_button.callback = self.edit_sm_button_callback
 
             container.add_item(
                 ui.Section(
@@ -197,157 +197,63 @@ class ConfigMenu(ui.LayoutView):
         await self.parent_view.update_module_page(self)
         await interaction.response.edit_message(view=self.parent_view)
 
-    async def view_sm_page(self, channel_id: int):
-        self.clear_items()
+    async def edit_sm_button_callback(self, interaction: discord.Interaction):
+        custom_id = interaction.data["custom_id"]
 
-        sm = self.sm_chnl_cache.get(str(channel_id))
-        if sm is None:
-            raise KeyError(channel_id)
+        channel_id = custom_id.split(":")[1]
+        message = self.sm_chnl_cache.get(str(channel_id), {}).get("message")
 
-        try:
-            message = sm["message"]
-        except KeyError:
-            return
+        modal = ui.Modal(
+            title="Edit Sticky Message",
+            custom_id=f"edit_sm:{channel_id}"
+        )
 
-        container = ui.Container()
+        channel_select = ui.ChannelSelect(
+            channel_types=[discord.ChannelType.text],
+            placeholder="Select a channel...",
+            required=True,
+            default_values=[discord.Object(id=channel_id)]
+        )
+        message = ui.TextInput(
+            label="Sticky Message Content",
+            style=discord.TextStyle.paragraph,
+            placeholder="Sticky message to send...",
+            required=True,
+            min_length=10,
+            max_length=1000,
+            default=message
+        )
 
-        async def go_back_btn_callback(i: discord.Interaction):
+        modal.add_item(
+            ui.Label(
+                text="Sticky Channel",
+                component=channel_select,
+                description="Channel to send the sticky message in."
+            )
+        )
+        modal.add_item(message)
+
+        async def edit_sm_modal_callback(i: discord.Interaction):
+            custom_id = i.data["custom_id"]
+
+            old_channel_id = int(custom_id.split(":")[1])
+            new_channel_id = channel_select.values[0].id
+            new_message = message.value
+
+            await self.sm_save(new_channel_id, new_message)
+
+            if old_channel_id != new_channel_id:
+                last_message_id = await self.state.get(str(old_channel_id))
+                await self.state.set(str(new_channel_id), last_message_id)
+                await self.sm_delete(old_channel_id)
+
             await self.config_page()
             await self.parent_view.update_module_page(self)
             await i.response.edit_message(view=self.parent_view)
 
-        go_back_btn = ui.Button(
-            label="<-",
-            style=discord.ButtonStyle.gray
-        )
-        go_back_btn.callback = go_back_btn_callback
+        modal.on_submit = edit_sm_modal_callback
 
-        container.add_item(
-            ui.ActionRow(
-                go_back_btn
-            )
-        )
-
-        # --- Sticky Message Info ---
-        container.add_item(
-            ui.TextDisplay(
-                f"## <#{channel_id}>"
-            )
-        )
-        container.add_item(
-            ui.TextDisplay(
-                "**Message:**\n"
-                f"-# **╰┈➤{message if len(message) < 200 else f'{message[:200]}...'}**"
-            )
-        )
-
-        # --- Management Zone ---
-        async def edit_sm_button_callback(interaction: discord.Interaction):
-            custom_id = interaction.data["custom_id"]
-
-            channel_id = custom_id.split(":")[1]
-            message = self.sm_chnl_cache.get(str(channel_id), {}).get("message")
-
-            modal = ui.Modal(
-                title="Edit Sticky Message",
-                custom_id=f"edit_sm:{channel_id}"
-            )
-
-            channel_select = ui.ChannelSelect(
-                channel_types=[discord.ChannelType.text],
-                placeholder="Select a channel...",
-                required=True,
-                default_values=[discord.Object(id=channel_id)]
-            )
-            message = ui.TextInput(
-                label="Sticky Message Content",
-                style=discord.TextStyle.paragraph,
-                placeholder="Sticky message to send...",
-                required=True,
-                min_length=10,
-                max_length=1000,
-                default=message
-            )
-
-            modal.add_item(
-                ui.Label(
-                    text="Sticky Channel",
-                    component=channel_select,
-                    description="Channel to send the sticky message in."
-                )
-            )
-            modal.add_item(message)
-
-            async def edit_sm_modal_callback(i: discord.Interaction):
-                custom_id = i.data["custom_id"]
-
-                old_channel_id = int(custom_id.split(":")[1])
-                new_channel_id = channel_select.values[0].id
-                new_message = message.value
-
-                await self.sm_save(new_channel_id, new_message)
-
-                if old_channel_id != new_channel_id:
-                    last_message_id = await self.state.get(str(old_channel_id))
-                    await self.state.set(str(new_channel_id), last_message_id)
-                    await self.sm_delete(old_channel_id)
-
-                await self.view_sm_page(int(new_channel_id))
-                await i.response.edit_message(view=self)
-
-            modal.on_submit = edit_sm_modal_callback
-
-            await interaction.response.send_modal(modal)
-
-
-        async def delete_sm_btn_callback(
-            interaction: discord.Interaction
-        ):
-            custom_id = interaction.data["custom_id"]
-
-            channel_id = custom_id.split(":")[1]
-
-            try:
-                await self.sm_delete(int(channel_id))
-            except KeyError:
-                pass
-
-            await self.config_page()
-            await self.parent_view.update_module_page(self)
-            await interaction.response.edit_message(view=self.parent_view)
-
-        edit_sm_btn = ui.Button(
-            label="Edit",
-            style=discord.ButtonStyle.grey,
-            custom_id=f"edit_sm:{channel_id}"
-        )
-        edit_sm_btn.callback = edit_sm_button_callback
-
-        delete_sm_btn = ui.Button(
-            label="Delete",
-            style=discord.ButtonStyle.red ,
-            custom_id=f"delete_sm:{channel_id}"
-        )
-        delete_sm_btn.callback = delete_sm_btn_callback
-
-        container.add_item(
-           ui.ActionRow(
-               edit_sm_btn,
-               delete_sm_btn
-           )
-        )
-
-        self.add_item(container)
-
-    async def view_btn_callback(
-        self,
-        i: discord.Interaction
-    ):
-        custom_id = i.data["custom_id"]
-        channel_id = custom_id.split(":", 2)[1]
-
-        await self.view_sm_page(int(channel_id))
-        await i.response.edit_message(view=self)
+        await interaction.response.send_modal(modal)
 
 
 class StickyMessage(Module):
