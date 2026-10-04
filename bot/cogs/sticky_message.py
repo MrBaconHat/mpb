@@ -116,11 +116,11 @@ class ConfigMenu(ui.LayoutView):
         )
 
         delete_all_button = ui.Button(
-            label="Delete All",
+            label="Delete",
             style=discord.ButtonStyle.red,
             disabled=len(sticky_msgs) <= 0
         )
-        delete_all_button.callback = self.delete_all_sm_btn_callback
+        delete_all_button.callback = self.delete_sm_btn_callback
 
         danger_zone = ui.ActionRow(
             add_button,
@@ -183,19 +183,61 @@ class ConfigMenu(ui.LayoutView):
                 type(e), e, e.__traceback__
             )
 
-    async def delete_all_sm_btn_callback(self, interaction: discord.Interaction):
-        await self.config.delete("channels")
+    async def delete_sm_btn_callback(self, interaction: discord.Interaction):
+        sticky_messages = deepcopy(self.sm_chnl_cache)
 
-        channels = deepcopy(self.sm_chnl_state)
-        for channel in channels:
-            await self.state.delete(channel)
+        modal = ui.Modal(
+            title="Delete Sticky Message"
+        )
 
-        self.sm_chnl_cache = {}
-        self.sm_chnl_state = {}
+        sm_select = ui.CheckboxGroup(
+            min_values=1,
+            max_values=len(sticky_messages)
+        )
 
-        await self.config_page()
-        await self.parent_view.update_module_page(self)
-        await interaction.response.edit_message(view=self.parent_view)
+        for channel_id, data in sticky_messages.items():
+            message = data["message"]
+
+            channel = None
+            try:
+                channel = self.bot.get_channel(int(channel_id)) or await self.bot.fetch_channel(int(channel_id))
+            except (discord.NotFound, discord.Forbidden):
+                continue
+
+            if channel is None:
+                continue
+
+            sm_select.add_option(
+                label=f"#{channel.name}",
+                default=False,
+                value=channel_id
+            )
+
+        modal.add_item(sm_select)
+
+        # === Modal's Callback ===
+        async def on_sm_delete_modal_submit(interaction: discord.Interaction):
+            selected_sms = sm_select.values
+            for chnl_id in selected_sms:
+                try:
+                    await self.config.delete(f"channels.{chnl_id}")
+                    await self.state.delete(chnl_id)
+
+                    self.sm_chnl_cache.pop(chnl_id, None)
+                    self.sm_chnl_state.pop(chnl_id, None)
+
+                except KeyError:
+                    continue
+
+            await self.config_page()
+            await self.parent_view.update_module_page(self)
+            await interaction.response.edit_message(view=self.parent_view)
+                
+
+        modal.on_submit = on_sm_delete_modal_submit
+
+        await interaction.response.send_modal(modal)
+        
 
     async def edit_sm_button_callback(self, interaction: discord.Interaction):
         custom_id = interaction.data["custom_id"]
