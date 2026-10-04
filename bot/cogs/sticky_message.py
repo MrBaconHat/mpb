@@ -365,7 +365,14 @@ class StickyMessage(Module):
 
             try:
                 new_message = await message.channel.send(channel_config.get("message"))
-                await state.set(f"{message.channel.id}.last_message_id", str(new_message.id))
+                try:
+                    await state.update(
+                        str(message.channel.id),
+                        {"last_message_id": str(new_message.id)},
+                        strict_keys=True
+                    )
+                except KeyError:
+                    pass
                 self.channel_last_message[str(message.channel.id)] = new_message.id
 
             except discord.NotFound:
