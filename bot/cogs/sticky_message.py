@@ -95,11 +95,11 @@ class ConfigMenu(ui.LayoutView):
 
             container.add_item(
                 ui.Section(
-                    f"<#{channel}>\n-# **╰┈➤ {message if len(message) < 70 else f'{message[:70]}...'}**",
+                    f"<#{channel}>\n-# **╰┈➤ {message if len(message) < 30 else f'{message[:30]}...'}**",
                     accessory=view_button
                 )
             )
-
+            
         # ======= Danger Zone ========
         container.add_item(ui.Separator())
 
