@@ -375,8 +375,6 @@ class StickyMessage(Module):
             return
 
         async with lock:
-            print("lock acquired")
-            
             config = self.storage.get_module(
                 message.guild.id, 
                 self.INTERNAL_NAME, 
@@ -391,38 +389,25 @@ class StickyMessage(Module):
             channel_config = self.channel_cache.get(str(message.channel.id))
 
             if channel_config is False:
-                print("config is false")
                 return
                 
             if channel_config is None:
-                print("config is none")
                 channel_config = await config.get(f"channels.{message.channel.id}")
                 if channel_config is None:
-                    print("channel is not configured, setting it to false")
                     self.channel_cache[str(message.channel.id)] = False
                     return
-
-                print("disk configuration found! setting the data")
-                try:
-                    data = {
-                        "message": channel_config["message"],
-                        "last_message_id": await state.get(f"{message.channel.id}.last_message_id",  None)
-                    }
-                except Exception as e:
-                    traceback.print_exception(
-                        type(e), e, e.__traceback__
-                    )
-                print("data created:", data)
-                
+                    
+                data = {
+                    "message": channel_config["message"],
+                    "last_message_id": await state.get(f"{message.channel.id}.last_message_id",  None)
+                }
 
                 self.channel_cache[str(message.channel.id)] = data
                 channel_config = data
-                print("data set")
 
             last_message_id = channel_config.get("last_message_id")
 
             if last_message_id:
-                print("deleting last message")
                 last_message_id = int(last_message_id)
                 
                 if last_message_id > message.id:
