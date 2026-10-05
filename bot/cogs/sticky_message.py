@@ -316,9 +316,11 @@ class StickyMessage(Module):
         self.bot = bot
         self.storage = bot.storage
 
-        self.lock = TTLCache(maxsize=100, ttl=60)
+        self.lock = TTLCache(maxsize=10000, ttl=60)
+        
         self.debounce = 3
-        self.guild_channel_debounce = TTLCache(maxsize=1000, ttl=60)
+        self.guild_channel_debounce = TTLCache(maxsize=10000, ttl=60)
+        
         self.channel_cache = TTLCache(maxsize=10000, ttl=500)
 
         super().__init__(
