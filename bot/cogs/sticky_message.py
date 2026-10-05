@@ -61,6 +61,10 @@ class ConfigMenu(ui.LayoutView):
             else None
         )
 
+        await self.state.set(
+            f"{str(channel_id)}.last_message_id", last_message_id
+        )
+
         self.module.channel_cache[str(channel_id)] = {
             "message": message,
             "last_message_id": last_message_id
