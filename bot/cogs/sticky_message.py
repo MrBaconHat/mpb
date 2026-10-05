@@ -53,6 +53,19 @@ class ConfigMenu(ui.LayoutView):
         await self.config.set(f"channels.{channel_id}.message", message)
         self.sm_chnl_cache[str(channel_id)] = {"message": message}
 
+        cached = self.module.channel_cache.get(str(channel_id))
+
+        last_message_id = (
+            cached.get("last_message_id")
+            if isinstance(cached, dict)
+            else None
+        )
+
+        self.module.channel_cache[str(channel_id)] = {
+            "message": message,
+            "last_message_id": last_message_id
+        }
+
     async def sm_delete(self, channel_id: int):
         try:
             await self.config.delete(f"channels.{channel_id}")
@@ -62,6 +75,8 @@ class ConfigMenu(ui.LayoutView):
 
         self.sm_chnl_cache.pop(str(channel_id), None)
         self.sm_chnl_state.pop(str(channel_id), None)
+
+        self.module.channel_cache.pop(str(channel_id), None)
 
     async def config_page(self):
         self.clear_items()
@@ -283,6 +298,8 @@ class ConfigMenu(ui.LayoutView):
                 last_message_id = await self.state.get(str(old_channel_id))
                 if last_message_id:
                     await self.state.set(str(new_channel_id), last_message_id)
+                    self.module.channel_cache[str(new_channel_id)]["last_message_id"] = last_message_id
+                    
                 await self.sm_delete(old_channel_id)
 
             await self.config_page()
@@ -302,7 +319,7 @@ class StickyMessage(Module):
         self.lock = TTLCache(maxsize=100, ttl=60)
         self.debounce = 3
         self.guild_channel_debounce = TTLCache(maxsize=1000, ttl=60)
-        self.channel_last_message = TTLCache(maxsize=10000, ttl=500)
+        self.channel_cache = TTLCache(maxsize=10000, ttl=500)
 
         super().__init__(
             module_name="Sticky Message",
@@ -356,6 +373,7 @@ class StickyMessage(Module):
             return
 
         async with lock:
+            
             config = self.storage.get_module(
                 message.guild.id, 
                 self.INTERNAL_NAME, 
@@ -366,22 +384,41 @@ class StickyMessage(Module):
                 self.INTERNAL_NAME, 
                 "state"
             )
+            
+            channel_config = self.channel_cache.get(str(message.channel.id))
 
-            channel_config = await config.get(f"channels.{message.channel.id}")
+            if channel_config is False:
+                return
+                
             if channel_config is None:
-                return
+                channel_config = await config.get(f"channels.{message.channel.id}")
+                if channel_config is None:
+                    self.channel_cache[str(message.channel.id)] = False
+                    return
 
-            last_message_id = self.channel_last_message.get(str(message.channel.id)) or await state.get(f"{message.channel.id}.last_message_id", 0)
-            if int(last_message_id) > message.id:
-                return
+                data = {
+                    "message": channel_config["message"],
+                    "last_message_id": await self.state.get(f"{message.channel.id}.last_message_id",  None)
+                }
 
-            try:
-                old_message = message.channel.get_partial_message(int(last_message_id))
+                self.channel_cache[str(message.channel.id)] = data
+                channel_config = data
 
-                await old_message.delete()
+            last_message_id = channel_config.get("last_message_id")
 
-            except (discord.Forbidden, discord.NotFound):
-                pass
+            if last_message_id:
+                last_message_id = int(last_message_id)
+                
+                if last_message_id > message.id:
+                    return
+
+                try:
+                    old_message = message.channel.get_partial_message(last_message_id)
+                    if old_message:
+                        await old_message.delete()
+
+                except (discord.Forbidden, discord.NotFound):
+                    pass
 
             while True:
                 timer = self.guild_channel_debounce.get(
@@ -407,13 +444,16 @@ class StickyMessage(Module):
                         {"last_message_id": str(new_message.id)},
                         strict_keys=True
                     )
+
+                    self.channel_cache[str(message.channel.id)]["last_message_id"] = str(new_message.id)
                 except KeyError:
                     pass
-                self.channel_last_message[str(message.channel.id)] = new_message.id
 
             except discord.NotFound:
                 await config.delete(f"channels.{str(message.channel.id)}")
                 await state.delete(str(message.channel.id))
+
+                self.channel_cache.pop(str(message.channel.id), None)
 
             except discord.Forbidden:
                 pass
