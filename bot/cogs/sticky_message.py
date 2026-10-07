@@ -328,6 +328,7 @@ class StickyMessage(Module):
         self.channel_cache = TTLCache(maxsize=10000, ttl=500)
 
         super().__init__(
+            bot=self.bot,
             module_name="Sticky Message",
             module_description="Keep a message at the bottom of a channel.",
             internal_name="sticky_message"

@@ -8,7 +8,17 @@ from nestio.files import JSON
 
 
 class Module(commands.Cog):
-    def __init__(self, module_name: str, module_description: str, internal_name: str):
+    def __init__(
+        self, 
+        bot: commands.Bot,
+            
+        module_name: str, 
+        module_description: str, 
+        internal_name: str
+    ):
+        self.bot = bot
+        self.db = self.bot.db
+
         self.MODULE_NAME = module_name
         self.MODULE_DESCRIPTION = module_description
         self.INTERNAL_NAME = internal_name
@@ -19,7 +29,55 @@ class Module(commands.Cog):
         guild_id: str | int,
         parent_view
     ) -> list[ui.Item]:
-        return [] 
+        return []
+
+
+    async def is_enabled(
+        self,
+        guild_id: int
+    ) -> bool:
+        row = await self.db.fetchrow(
+            """
+            SELECT is_enabled
+            WHERE guild_id = ?
+              AND module_name = ?
+            """,
+            (guild_id, self.INTERNAL_NAME)
+        )
+        if row is None:
+            return False
+
+        return bool(row["is_enabled"])
+
+
+    async def set_enabled(
+        self,
+        guild_id: int,
+        enabled: bool
+    ):
+        await self.db.execute(
+            """
+            UPDATE modules
+            SET is_enabled = ?
+            WHERE guild_id = ?
+              AND module_name = ?
+            """,
+            (enabled, guild_id, self.INTERNAL_NAME)
+        )
+        await self.db.commit()
+
+
+    async def toggle(
+        self,
+        guild_id: int
+    ):
+        enabled = await self.is_enabled(guild_id)
+
+        await self.set_enabled(
+            guild_id,
+            not enabled
+        )
+        
 
 
 class ModuleView(ui.LayoutView):
