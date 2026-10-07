@@ -363,10 +363,7 @@ class StickyMessage(Module):
         if not isinstance(message.channel, discord.TextChannel):
             return
 
-        enabled = await self.storage.is_enabled(
-            message.guild.id, 
-            self.INTERNAL_NAME
-        )
+        enabled = await self.is_enabled(message.guild.id)
         if not enabled:
             return
 

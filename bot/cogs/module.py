@@ -4,8 +4,6 @@ import discord
 from discord import ui, app_commands
 from discord.ext import commands
 
-from nestio.files import JSON
-
 
 class Module(commands.Cog):
     def __init__(
@@ -39,6 +37,7 @@ class Module(commands.Cog):
         row = await self.db.fetchrow(
             """
             SELECT is_enabled
+            FROM modules
             WHERE guild_id = ?
               AND module_name = ?
             """,
@@ -54,46 +53,50 @@ class Module(commands.Cog):
         self,
         guild_id: int,
         enabled: bool
-    ):
+    ) -> bool:
         await self.db.execute(
             """
-            UPDATE modules
-            SET is_enabled = ?
-            WHERE guild_id = ?
-              AND module_name = ?
+            INSERT INTO modules (
+                guild_id,
+                module_name,
+                is_enabled
+            )
+            VALUES (?, ?, ?)
+            ON CONFLICT(guild_id, module_name)
+            DO UPDATE SET is_enabled = excluded.is_enabled
             """,
-            (enabled, guild_id, self.INTERNAL_NAME)
+            (guild_id, self.INTERNAL_NAME, enabled)
         )
         await self.db.commit()
+
+
+        return enabled
 
 
     async def toggle(
         self,
         guild_id: int
-    ):
+    ) -> bool:
         enabled = await self.is_enabled(guild_id)
 
         await self.set_enabled(
             guild_id,
             not enabled
         )
-        
+
+        return not enabled
 
 
 class ModuleView(ui.LayoutView):
     def __init__(
         self,
         guild_id: int,
-        modules: list, 
-        module_config: dict, 
-        module_files: dict
+        modules: dict,
     ):
         super().__init__()
 
         self.guild_id = guild_id
         self.modules = modules
-        self.module_config = module_config
-        self.module_files = module_files
         
         self.pages: dict[str, list[ui.Item]] = {}
         self.selected_page = None
@@ -106,14 +109,6 @@ class ModuleView(ui.LayoutView):
     async def initialize(self):
         await self.build_pages()
         await self.render_page()
-
-
-    def get_selected_module(self) -> Module | None:
-        for module in self.modules:
-            if module.INTERNAL_NAME == self.selected_page:
-                return module
-
-        return None
 
 
     def build_select_menu(self) -> ui.Select:
@@ -131,7 +126,12 @@ class ModuleView(ui.LayoutView):
         if self.selected_page is None and len(self.pages) > 0:
             self.selected_page = list(self.pages)[0]
 
-        for module in self.modules[self.min:self.max]:
+        modules = [
+            data["module"]
+            for data in self.modules.values()
+        ]
+
+        for module in modules[self.min:self.max]:
             options.append(
                discord.SelectOption(
                    label=module.MODULE_NAME,
@@ -159,7 +159,7 @@ class ModuleView(ui.LayoutView):
         return select
 
     def build_toggle_button(self, module: Module):
-        config = self.module_config.get(module.INTERNAL_NAME, {})
+        config = self.modules.get(module.INTERNAL_NAME, {})
         
         is_enabled = config.get("is_enabled", False)
         module_toggle_button = ui.Button(
@@ -179,7 +179,9 @@ class ModuleView(ui.LayoutView):
     async def build_pages(self):
         self.pages.clear()
         
-        for module in self.modules:
+        for data in self.modules.values():
+            module = data["module"]
+            
             components: list[ui.Item] = []
 
             module_components = await module.build_config_page(
@@ -212,7 +214,7 @@ class ModuleView(ui.LayoutView):
             ui.ActionRow(self.build_select_menu())
         )
 
-        module = self.get_selected_module()
+        module = self.modules[self.selected_page]["module"]
 
         if module:
             container.add_item(
@@ -232,13 +234,11 @@ class ModuleView(ui.LayoutView):
         custom_id = interaction.data["custom_id"]
         module_name = custom_id.split(":")[1]
 
-        config = self.module_files[module_name]
+        module = self.modules[module_name]["module"]
+            
+        enabled = await module.toggle(self.guild_id)
 
-        await config.set(
-            "is_enabled", not await config.get("is_enabled", False)
-        )
-
-        self.module_config[module_name] = await config.get() or {}
+        self.modules[module_name]["is_enabled"] = enabled
 
         await self.render_page()
 
@@ -266,7 +266,6 @@ class ModuleView(ui.LayoutView):
 class ModuleManagement(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.storage = bot.storage
 
 
     @app_commands.command(
@@ -281,27 +280,20 @@ class ModuleManagement(commands.Cog):
     ):
         await i.response.defer(ephemeral=True)
         
-        module = []
-        module_config = {}
-        module_files = {}
+        module = {}
         
         for name, cog in self.bot.cogs.items():
-            if not hasattr(cog, "INTERNAL_NAME"):
+            if not isinstance(cog, Module):
                 continue
 
-            module.append(cog)
-
-        for cog in module:
-            config = self.storage.get_module(i.guild.id, cog.INTERNAL_NAME, "config")
-
-            module_config[cog.INTERNAL_NAME] = await config.get() or {}
-            module_files[cog.INTERNAL_NAME] = config
+            module[cog.INTERNAL_NAME] = {
+                "module": cog,
+                "is_enabled": await cog.is_enabled(i.guild.id)
+            }
 
         view = ModuleView(
             i.guild.id,
-            module, 
-            module_config,
-            module_files
+            module
         )
         await view.initialize()
         
