@@ -125,7 +125,6 @@ class ModuleView(ui.LayoutView):
 
         if self.selected_page is None and len(self.pages) > 0:
             self.selected_page = list(self.pages)[0]
-        print(self.selected_page, self.pages)
 
         modules = [
             data["module"]
@@ -179,12 +178,8 @@ class ModuleView(ui.LayoutView):
 
     async def build_pages(self):
         self.pages.clear()
-
-        print("build pages")
-        print("Modules:", self.modules)
-        print("Module Values:", self.modules.values())
+        
         for data in self.modules.values():
-            print("loop")
             module = data["module"]
             
             components: list[ui.Item] = []
@@ -193,13 +188,10 @@ class ModuleView(ui.LayoutView):
                 self.guild_id,
                 self
             )
-            print("Module Components:", module_components)
             
             for ui_item in module_components:
-                print("UI Item:", ui_item)
                 components.append(ui_item)
 
-            print(components)
             self.pages[module.INTERNAL_NAME] = components
 
     
@@ -292,9 +284,7 @@ class ModuleManagement(commands.Cog):
         module = {}
         
         for name, cog in self.bot.cogs.items():
-            print("cog loop")
             if not hasattr(cog, "INTERNAL_NAME"):
-                print(f"{name}({type(cog)}): not Module object")
                 continue
 
             module[cog.INTERNAL_NAME] = {
