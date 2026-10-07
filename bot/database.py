@@ -22,7 +22,7 @@ class Database:
     async def connect(self):
         self.connection = await aiosqlite.connect(self.path)
         
-        self.connection.factory_row = aiosqlite.Row
+        self.connection.row_factory = aiosqlite.Row
 
     async def close(self):
         if self.connection:
