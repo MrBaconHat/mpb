@@ -6,6 +6,8 @@ class Database:
         self.path = path
         self.connection: aiosqlite.Connection = None
 
+        self.connection.factory_row = aiosqlite.Row
+
     async def initialize(self):
         await self.execute("""
         CREATE TABLE IF NOT EXISTS modules (
