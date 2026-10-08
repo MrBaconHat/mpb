@@ -1,3 +1,4 @@
+import aiosqlite
 import traceback
 
 import discord
@@ -12,7 +13,10 @@ class Module(commands.Cog):
             
         module_name: str, 
         module_description: str, 
-        internal_name: str
+        internal_name: str,
+
+        config_table: str,
+        state_table: str
     ):
         self.bot = bot
         self.db = self.bot.db
@@ -20,6 +24,9 @@ class Module(commands.Cog):
         self.MODULE_NAME = module_name
         self.MODULE_DESCRIPTION = module_description
         self.INTERNAL_NAME = internal_name
+
+        self.CONFIG_TABLE = config_table
+        self.STATE_TABLE = state_table
 
     
     async def build_config_page(
@@ -82,6 +89,33 @@ class Module(commands.Cog):
         )
 
         return not enabled
+
+
+    async def get_config(
+        self,
+        guild_id: int
+    ) -> aiosqlite.Row | None:
+        return await self.db.fetchrow(
+            f"""
+            SELECT *
+            FROM {self.CONFIG_TABLE}
+            WHERE guild_id = ?
+            """,
+            (guild_id,)
+        )
+
+    async def get_state(
+        self,
+        guild_id: int
+    ) -> aiosqlite.Row | None:
+        return await self.db.fetchrow(
+            f"""
+            SELECT *
+            FROM {self.STATE_TABLE}
+            WHERE guild_id = ?
+            """,
+            (guild_id,)
+        )
 
 
 class ModuleView(ui.LayoutView):

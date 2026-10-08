@@ -331,7 +331,9 @@ class StickyMessage(Module):
             bot=self.bot,
             module_name="Sticky Message",
             module_description="Keep a message at the bottom of a channel.",
-            internal_name="sticky_message"
+            internal_name="sticky_message",
+            config_table="sticky_message_config",
+            state_table="sticky_message_state"
         )
 
     async def build_config_page(
