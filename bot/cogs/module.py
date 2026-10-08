@@ -48,7 +48,6 @@ class Module(commands.Cog):
 
         return bool(row["is_enabled"])
 
-
     async def set_enabled(
         self,
         guild_id: int,
@@ -69,9 +68,7 @@ class Module(commands.Cog):
         )
         await self.db.commit()
 
-
         return enabled
-
 
     async def toggle(
         self,
