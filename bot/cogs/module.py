@@ -138,6 +138,16 @@ class ModuleView(ui.LayoutView):
         self.min = 0
         self.max = self.page_size  # Account for < and >
 
+
+    def _iter_interactables(self, items: list[ui.Item]):
+        """helper to recursively itwrate through ActionRow and find enabled interactables(buttons, select menus)"""
+        for item in items:
+            # if it's an ActionRow or container holding children, yield from them
+            if hasattr(item, "children") and item.children:
+                yield from self._iter_interactables(item.children)
+            elif hasattr(item, "disabled"):
+                yield item
+
     
     async def initialize(self):
         await self.build_pages()
@@ -248,7 +258,9 @@ class ModuleView(ui.LayoutView):
             ui.ActionRow(self.build_select_menu())
         )
 
-        module = self.modules[self.selected_page]["module"]
+        module_data = self.modules.get(self.selected_page, {})
+        module = module_data.get("module", {})
+        is_enabled = module.get("is_enabled", False)
 
         if module:
             container.add_item(
@@ -258,7 +270,24 @@ class ModuleView(ui.LayoutView):
         container.add_item(ui.Separator())
 
         if self.selected_page:
+            page_items = self.pages[self.selected_page]
+            if self.selected_page not in self.disabled_interactables: 
+                self.disabled_interactables[self.selected_page] = set()
+                
             for item in self.pages[self.selected_page]:
+                for item in self._iter_interactables(page_items):
+                    if not is_enabled:
+                        if not item.disabled:
+                            self.disabled_interactables[self.selected_page].add(item)
+                            item.disabled = True
+                    else:
+                        if item in self.disabled_interactables[self.selected_page]:
+                            item.disabled = False
+                
+                container.add_item(item)
+
+            # Add everything into container at end
+            for item in page_items:
                 container.add_item(item)
 
         self.add_item(container)
@@ -273,27 +302,6 @@ class ModuleView(ui.LayoutView):
         enabled = await module.toggle(self.guild_id)
 
         self.modules[module_name]["is_enabled"] = enabled
-
-        page_items = self.pages[module_name]
-        disabled_interactables: list[ui.Item] = []
-        for item in page_items:
-            if isinstance(item, ui.ActionRow):
-                for child in item:
-                    found = False
-                    if isinstance(child, ui.Button): 
-                        child.disabled = not enabled
-                        found = True
-                    elif isinstance(child, ui.BaseSelect): 
-                        child.disabled = not enabled
-                        found = True
-
-                    if found:
-                        # We keep track of interactables we disabled
-                        # To prevent toggle from enabling interactables that were disabled by its module
-                        disabled_interactables.append(child)
-
-        if len(disabled_interactables) > 0:
-            self.disabled_interactables[module_name ] = disabled_interactables
 
         await self.render_page()
 
