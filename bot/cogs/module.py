@@ -259,8 +259,8 @@ class ModuleView(ui.LayoutView):
         )
 
         module_data = self.modules.get(self.selected_page, {})
-        module = module_data.get("module", {})
-        is_enabled = module.get("is_enabled", False)
+        module = module_data.get("module")
+        is_enabled = module_data.get("is_enabled", False)
 
         if module:
             container.add_item(
@@ -283,8 +283,6 @@ class ModuleView(ui.LayoutView):
                     else:
                         if item in self.disabled_interactables[self.selected_page]:
                             item.disabled = False
-                
-                container.add_item(item)
 
             # Add everything into container at end
             for item in page_items:
