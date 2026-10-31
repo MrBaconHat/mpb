@@ -147,6 +147,11 @@ class ModuleView(ui.LayoutView):
                 yield from self._iter_interactables(item.children)
             elif hasattr(item, "disabled"):
                 yield item
+                
+            # Check if its a Section with a button
+            if hasattr(item, "accessory") and item.accessory is not None:
+                if hasattr(item.accessory, "disabled"):
+                    yield item.accessory
 
     
     async def initialize(self):
