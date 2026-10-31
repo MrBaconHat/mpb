@@ -130,6 +130,8 @@ class ModuleView(ui.LayoutView):
         self.modules = modules
         
         self.pages: dict[str, list[ui.Item]] = {}
+        # Buttons or select menus disabled by toggle button
+        self.disabled_interactables: dict[str, list[ui.Item]] = {}
         self.selected_page = None
 
         self.page_size = 22
@@ -271,6 +273,27 @@ class ModuleView(ui.LayoutView):
         enabled = await module.toggle(self.guild_id)
 
         self.modules[module_name]["is_enabled"] = enabled
+
+        page_items = self.pages[module_name]
+        disabled_interactables: list[ui.Item] = []
+        for item in page_items:
+            if isinstance(item, ui.ActionRow):
+                for child in item:
+                    found = False
+                    if isinstance(child, ui.Button): 
+                        child.disabled = not enabled
+                        found = True
+                    elif isinstance(child, ui.BaseSelect): 
+                        child.disabled = not enabled
+                        found = True
+
+                    if found:
+                        # We keep track of interactables we disabled
+                        # To prevent toggle from enabling interactables that were disabled by its module
+                        disabled_interactables.append(child)
+
+        if len(disabled_interactables) > 0:
+            self.disabled_interactables[module_name ] = disabled_interactables
 
         await self.render_page()
 
