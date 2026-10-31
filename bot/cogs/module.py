@@ -279,17 +279,16 @@ class ModuleView(ui.LayoutView):
             if self.selected_page not in self.disabled_interactables: 
                 self.disabled_interactables[self.selected_page] = set()
                 
-            for item in self.pages[self.selected_page]:
-                for item in self._iter_interactables(page_items):
-                    if not is_enabled:
-                        if not item.disabled:
-                            self.disabled_interactables[self.selected_page].add(item)
-                            item.disabled = True
-                    else:
-                        if item in self.disabled_interactables[self.selected_page]:
-                            item.disabled = False
+            for item in self._iter_interactables(page_items):
+                if not is_enabled:
+                    if not item.disabled:
+                        self.disabled_interactables[self.selected_page].add(item)
+                        item.disabled = True
+                else:
+                    if item in self.disabled_interactables[self.selected_page]:
+                        item.disabled = False
 
-            # Add everything into container at end
+            # Add everything into container at the end
             for item in page_items:
                 container.add_item(item)
 
