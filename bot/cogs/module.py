@@ -104,6 +104,42 @@ class Module(commands.Cog):
             (guild_id,)
         )
 
+    async def update_config(
+        self,
+        guild_id: int,
+        where: dict,
+        **kwargs
+    ):
+        if not kwargs or not where:
+            return
+
+        set_values = ", ".join(
+            f"{column} = ?"
+            for column in kwargs
+        )
+
+        conditions = " AND ".join(
+            f"{column} = ?"
+            for column in where
+        )
+
+        values = (
+            *kwargs.values(),
+            guild_id,
+            *where.values()
+        )
+
+        await self.db.execute(
+            f"""
+            UPDATE {self.CONFIG_TABLE}
+            SET {set_values}
+            WHERE guild_id = ? AND {conditions}
+            """,
+            values
+        )
+
+        await self.db.commit()
+
     async def set_config(
         self, 
         guild_id: int,
@@ -177,6 +213,43 @@ class Module(commands.Cog):
             """,
             values
         )
+        await self.db.commit()
+
+    
+    async def update_state(
+        self,
+        guild_id: int,
+        where: dict,
+        **kwargs
+    ):
+        if not kwargs or not where:
+            return
+
+        set_values = ", ".join(
+            f"{column} = ?"
+            for column in kwargs
+        )
+
+        conditions = " AND ".join(
+            f"{column} = ?"
+            for column in where
+        )
+
+        values = (
+            *kwargs.values(),
+            guild_id,
+            *where.values()
+        )
+
+        await self.db.execute(
+            f"""
+            UPDATE {self.STATE_TABLE}
+            SET {set_values}
+            WHERE guild_id = ? AND {conditions}
+            """,
+            values
+        )
+
         await self.db.commit()
 
 
