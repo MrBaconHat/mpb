@@ -452,6 +452,7 @@ class StickyMessage(Module):
 
                     self.channel_cache[str(message.channel.id)]["last_message_id"] = str(new_message.id)
                 except KeyError:
+                    self.channel_cache.pop(str(message.channel.id), None)
                     pass
 
             except discord.NotFound:
