@@ -384,35 +384,6 @@ class StickyMessage(Module):
 
         return items
 
-    async def get_guild_config(
-        self, 
-        guild_id: int,
-        channel_id: int
-    ):
-        return await self.db.fetchrow(
-            f"""
-            SELECT *
-            FROM {self.CONFIG_TABLE}
-            WHERE guild_id = ? AND channel_id = ?
-            """,
-            (guild_id, channel_id)
-        )
-
-    
-    async def get_guild_state(
-        self,
-        guild_id: int,
-        channel_id: int
-    ):
-        return await self.db.fetchrow(
-            f"""
-            SELECT *
-            FROM {self.STATE_TABLE}
-            WHERE guild_id = ? AND channel_id = ?
-            """,
-            (guild_id, channel_id)
-        )
-
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -448,16 +419,22 @@ class StickyMessage(Module):
                 return
                 
             if channel_config is None:
-                channel_config = await self.get_guild_config(guild_id, channel_id)
+                channel_config = await self.get_config(
+                    guild_id, 
+                    where={"channel_id": channel_id}
+                )
                 if channel_config is None:
                     self.channel_cache[str(channel_id)] = False
                     return
 
-                state = await self.get_guild_state(guild_id, channel_id)
+                state = await self.get_state(
+                    guild_id, 
+                    where={"channel_id": channel_id}
+                )
                     
                 data = {
                     "message": channel_config["message"],
-                    "last_message_id": state.get("last_message_id", None)
+                    "last_message_id": state.get["last_message_id"] if state else None
                 }
 
                 self.channel_cache[str(channel_id)] = data
@@ -496,21 +473,29 @@ class StickyMessage(Module):
 
             try:
                 new_message = await message.channel.send(channel_config.get("message"))
-                try:
-                    await self.set_state(
-                        guild_id,
-                        conflicting_columns=('channel_id',),
-                        channel_id=channel_id,
-                        last_message_id=str(new_message.id)
-                    )
+                
+                await self.update_state(
+                    guild_id,
+                    where={"channel_id": channel_id},
+                    last_message_id=str(new_message.id)
+                )
 
-                    self.channel_cache[str(channel_id)]["last_message_id"] = str(new_message.id)
-                except KeyError:
-                    self.channel_cache.pop(str(channel_id), None)
-                    pass
+                cached = self.channel_cache.get(str(channel_id))
+
+                if cached is not None:
+                    cached["last_message_id"] = str(new_message.id)
 
             except discord.NotFound:
                 # TODO: Add a method for deleting from config and state
+
+                await self.delete_config(
+                    guild_id,
+                    where={"channel_id": channel_id}
+                )
+                await self.delete_state(
+                    guild_id,
+                    where={"channel_id": channel_id}
+                )
                 
                 #await config.delete(f"channels.{str(message.channel.id)}")
                 #await state.delete(str(message.channel.id))
