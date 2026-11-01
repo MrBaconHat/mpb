@@ -104,6 +104,21 @@ class Module(commands.Cog):
             (guild_id,)
         )
 
+    async def set_config(
+        self, 
+        guild_id: int, 
+        **kwargs
+    ):
+        columns = tuple(list(kwargs.keys()))
+        columns_str = ",\n".join(key for key in columns)
+        values = tuple(list(kwargs.keys()))
+        await self.db.execute(
+            f"""
+            INSERT INTO {self.INTERNAL_NAME} (guild_id, {columns_str})
+            VALUES ({})
+            """
+        )
+
     async def get_state(
         self,
         guild_id: int
