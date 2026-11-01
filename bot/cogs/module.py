@@ -6,15 +6,14 @@ from discord import ui, app_commands
 from discord.ext import commands
 
 
+
 class Module(commands.Cog):
     def __init__(
-        self, 
+        self,
         bot: commands.Bot,
-            
-        module_name: str, 
-        module_description: str, 
+        module_name: str,
+        module_description: str,
         internal_name: str,
-
         config_table: str,
         state_table: str
     ):
@@ -28,7 +27,6 @@ class Module(commands.Cog):
         self.CONFIG_TABLE = config_table
         self.STATE_TABLE = state_table
 
-    
     async def build_config_page(
         self,
         guild_id: str | int,
@@ -36,11 +34,11 @@ class Module(commands.Cog):
     ) -> list[ui.Item]:
         return []
 
+    # ==============================
+    # Module Management
+    # ==============================
 
-    async def is_enabled(
-        self,
-        guild_id: int
-    ) -> bool:
+    async def is_enabled(self, guild_id: int) -> bool:
         row = await self.db.fetchrow(
             """
             SELECT is_enabled
@@ -50,10 +48,8 @@ class Module(commands.Cog):
             """,
             (guild_id, self.INTERNAL_NAME)
         )
-        if row is None:
-            return False
 
-        return bool(row["is_enabled"])
+        return bool(row["is_enabled"]) if row else False
 
     async def set_enabled(
         self,
@@ -73,184 +69,179 @@ class Module(commands.Cog):
             """,
             (guild_id, self.INTERNAL_NAME, enabled)
         )
-        await self.db.commit()
 
+        await self.db.commit()
         return enabled
 
-    async def toggle(
+    async def toggle(self, guild_id: int) -> bool:
+        enabled = not await self.is_enabled(guild_id)
+        return await self.set_enabled(guild_id, enabled)
+
+    # ==============================
+    # Private Database Helpers
+    # ==============================
+
+    async def _get_record(
         self,
-        guild_id: int
-    ) -> bool:
-        enabled = await self.is_enabled(guild_id)
-
-        await self.set_enabled(
-            guild_id,
-            not enabled
-        )
-
-        return not enabled
-
-
-    async def get_config(
-        self,
-        guild_id: int
+        table: str,
+        guild_id: int,
+        where: dict | None = None
     ) -> aiosqlite.Row | None:
+        conditions = ["guild_id = ?"]
+        values = [guild_id]
+
+        if where:
+            conditions.extend(
+                f"{column} = ?" for column in where
+            )
+            values.extend(where.values())
+
         return await self.db.fetchrow(
             f"""
             SELECT *
-            FROM {self.CONFIG_TABLE}
-            WHERE guild_id = ?
+            FROM {table}
+            WHERE {" AND ".join(conditions)}
             """,
-            (guild_id,)
+            tuple(values)
+        )
+
+    async def _insert_record(
+        self,
+        table: str,
+        guild_id: int,
+        **kwargs
+    ):
+        columns = ["guild_id", *kwargs.keys()]
+        placeholders = ", ".join("?" for _ in columns)
+
+        values = (guild_id, *kwargs.values())
+
+        await self.db.execute(
+            f"""
+            INSERT INTO {table} (
+                {", ".join(columns)}
+            )
+            VALUES ({placeholders})
+            """,
+            values
+        )
+
+        await self.db.commit()
+
+    async def _update_record(
+        self,
+        table: str,
+        guild_id: int,
+        where: dict | None = None,
+        **kwargs
+    ):
+        if not kwargs:
+            return
+
+        set_values = ", ".join(
+            f"{column} = ?" for column in kwargs
+        )
+
+        conditions = ["guild_id = ?"]
+        conditions.extend(
+            f"{column} = ?" for column in (where or {})
+        )
+
+        values = (
+            *kwargs.values(),
+            guild_id,
+            *((where or {}).values())
+        )
+
+        await self.db.execute(
+            f"""
+            UPDATE {table}
+            SET {set_values}
+            WHERE {" AND ".join(conditions)}
+            """,
+            values
+        )
+
+        await self.db.commit()
+
+    # ==============================
+    # Configuration
+    # ==============================
+
+    async def get_config(
+        self,
+        guild_id: int,
+        where: dict | None = None
+    ) -> aiosqlite.Row | None:
+        return await self._get_record(
+            self.CONFIG_TABLE,
+            guild_id,
+            where
+        )
+
+    async def insert_config(
+        self,
+        guild_id: int,
+        **kwargs
+    ):
+        await self._insert_record(
+            self.CONFIG_TABLE,
+            guild_id,
+            **kwargs
         )
 
     async def update_config(
         self,
         guild_id: int,
-        where: dict,
+        where: dict | None = None,
         **kwargs
     ):
-        if not kwargs or not where:
-            return
-
-        set_values = ", ".join(
-            f"{column} = ?"
-            for column in kwargs
-        )
-
-        conditions = " AND ".join(
-            f"{column} = ?"
-            for column in where
-        )
-
-        values = (
-            *kwargs.values(),
+        await self._update_record(
+            self.CONFIG_TABLE,
             guild_id,
-            *where.values()
+            where,
+            **kwargs
         )
 
-        await self.db.execute(
-            f"""
-            UPDATE {self.CONFIG_TABLE}
-            SET {set_values}
-            WHERE guild_id = ? AND {conditions}
-            """,
-            values
-        )
-
-        await self.db.commit()
-
-    async def set_config(
-        self, 
-        guild_id: int,
-        conflict_columns: tuple = ("guild_id",),
-        **kwargs
-    ):
-        columns = list(kwargs.keys())
-        columns_str = ", ".join(key for key in columns)
-        placeholder = ", ".join("?" for _ in range(len(columns) + 1))
-
-        conflicting_keys = "guild_id, " + ", ".join(key for key in conflict_columns)
-        
-        values = (guild_id, *kwargs.values())
-
-        set_values = "\n".join(f"{column} = excluded.{column}" for column in columns)
-            
-        await self.db.execute(
-            f"""
-            INSERT INTO {self.CONFIG_TABLE} (
-                guild_id, 
-                {columns_str}
-            )
-            VALUES ({placeholder})
-            ON CONFLICT({conflicting_keys})
-            DO UPDATE SET 
-                {set_values}
-            """,
-            values
-        )
-        await self.db.commit()
+    # ==============================
+    # State
+    # ==============================
 
     async def get_state(
         self,
-        guild_id: int
+        guild_id: int,
+        where: dict | None = None
     ) -> aiosqlite.Row | None:
-        return await self.db.fetchrow(
-            f"""
-            SELECT *
-            FROM {self.STATE_TABLE}
-            WHERE guild_id = ?
-            """,
-            (guild_id,)
+        return await self._get_record(
+            self.STATE_TABLE,
+            guild_id,
+            where
         )
 
-    async def set_state(
-        self, 
+    async def insert_state(
+        self,
         guild_id: int,
-        conflict_columns: tuple = ("guild_id",),
         **kwargs
     ):
-        columns = list(kwargs.keys())
-        columns_str = ", ".join(key for key in columns)
-        placeholder = ", ".join("?" for _ in range(len(columns) + 1))
-
-        conflicting_keys = "guild_id, " + ", ".join(key for key in conflict_columns)
-        
-        values = (guild_id, *kwargs.values())
-
-        set_values = "\n".join(f"{column} = excluded.{column}" for column in columns)
-            
-        await self.db.execute(
-            f"""
-            INSERT INTO {self.STATE_TABLE} (
-                guild_id, 
-                {columns_str}
-            )
-            VALUES ({placeholder})
-            ON CONFLICT({conflicting_keys})
-            DO UPDATE SET 
-                {set_values}
-            """,
-            values
+        await self._insert_record(
+            self.STATE_TABLE,
+            guild_id,
+            **kwargs
         )
-        await self.db.commit()
 
-    
     async def update_state(
         self,
         guild_id: int,
-        where: dict,
+        where: dict | None = None,
         **kwargs
     ):
-        if not kwargs or not where:
-            return
-
-        set_values = ", ".join(
-            f"{column} = ?"
-            for column in kwargs
-        )
-
-        conditions = " AND ".join(
-            f"{column} = ?"
-            for column in where
-        )
-
-        values = (
-            *kwargs.values(),
+        await self._update_record(
+            self.STATE_TABLE,
             guild_id,
-            *where.values()
+            where,
+            **kwargs
         )
 
-        await self.db.execute(
-            f"""
-            UPDATE {self.STATE_TABLE}
-            SET {set_values}
-            WHERE guild_id = ? AND {conditions}
-            """,
-            values
-        )
-
-        await self.db.commit()
 
 
 class ModuleView(ui.LayoutView):
