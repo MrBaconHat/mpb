@@ -417,13 +417,12 @@ class StickyMessage(Module):
                 if last_message_id > message.id:
                     return
 
-                try:
-                    old_message = message.channel.get_partial_message(last_message_id)
-                    if old_message:
+                old_message = message.channel.get_partial_message(last_message_id)
+                if old_message:
+                    try:
                         await old_message.delete()
-
-                except (discord.Forbidden, discord.NotFound):
-                    pass
+                    except (discord.Forbidden, discord.NotFound):
+                        pass
 
             while True:
                 timer = self.guild_channel_debounce.get(
