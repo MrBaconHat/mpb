@@ -499,6 +499,7 @@ class StickyMessage(Module):
                 try:
                     await self.set_state(
                         guild_id,
+                        conflicting_columns=('channel_id',),
                         channel_id=channel_id,
                         last_message_id=str(new_message.id)
                     )
