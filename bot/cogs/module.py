@@ -106,12 +106,15 @@ class Module(commands.Cog):
 
     async def set_config(
         self, 
-        guild_id: int, 
+        guild_id: int,
+        conflict_columns: tuple = ("guild_id",),
         **kwargs
     ):
         columns = list(kwargs.keys())
         columns_str = ", ".join(key for key in columns)
         placeholder = ", ".join("?" for _ in range(len(columns) + 1))
+
+        conflicting_keys = "guild_id, " + ", ".join(key for key in conflict_columns)
         
         values = (guild_id, *kwargs.values())
 
@@ -124,7 +127,7 @@ class Module(commands.Cog):
                 {columns_str}
             )
             VALUES ({placeholder})
-            ON CONFLICT(guild_id)
+            ON CONFLICT({conflicting_keys})
             DO UPDATE SET 
                 {set_values}
             """,
@@ -147,12 +150,15 @@ class Module(commands.Cog):
 
     async def set_state(
         self, 
-        guild_id: int, 
+        guild_id: int,
+        conflict_columns: tuple = ("guild_id",),
         **kwargs
     ):
         columns = list(kwargs.keys())
         columns_str = ", ".join(key for key in columns)
         placeholder = ", ".join("?" for _ in range(len(columns) + 1))
+
+        conflicting_keys = "guild_id, " + ", ".join(key for key in conflict_columns)
         
         values = (guild_id, *kwargs.values())
 
@@ -165,7 +171,7 @@ class Module(commands.Cog):
                 {columns_str}
             )
             VALUES ({placeholder})
-            ON CONFLICT(guild_id)
+            ON CONFLICT({conflicting_keys})
             DO UPDATE SET 
                 {set_values}
             """,
