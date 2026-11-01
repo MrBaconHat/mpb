@@ -26,14 +26,6 @@ class ConfigMenu(ui.LayoutView):
         self.parent_view = parent_view
 
         self.bot = self.module.bot
-        self.storage = self.bot.storage
-
-        self.config = self.storage.get_module(
-            str(self.guild_id), self.module.INTERNAL_NAME, "config"
-        )
-        self.state = self.storage.get_module(
-            str(self.guild_id), self.module.INTERNAL_NAME, "state"
-        )
 
         self.sm_chnl_cache = {}
         self.sm_chnl_state = {}
@@ -44,8 +36,8 @@ class ConfigMenu(ui.LayoutView):
 
 
     async def initialize(self):
-        self.sm_chnl_cache = await self.config.get("channels", {})
-        self.sm_chnl_state = await self.state.get() or {}
+        self.sm_chnl_cache = await self.module.get_configs(self.guild_id) or {}
+        self.sm_chnl_state = await self.module.get_states(self.guild_id) or {}
 
         await self.config_page()
 
