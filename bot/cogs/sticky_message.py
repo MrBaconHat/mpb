@@ -319,6 +319,7 @@ class StickyMessage(Module):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         #self.storage = bot.storage
+        self.db = bot.db
 
         self.lock = TTLCache(maxsize=10000, ttl=60)
         
@@ -335,6 +336,33 @@ class StickyMessage(Module):
             config_table="sticky_message_config",
             state_table="sticky_message_state"
         )
+        
+    async def initialize(self):
+        await self.db.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.CONFIG_TABLE} (
+                guild_id INTEGER NOT NULL,
+                channel_id INTEGER NOT NULL,
+                message TEXT NOT NULL,
+
+                PRIMARY KEY (guild_id, channel_id)
+            )
+            """
+        )
+
+        await self.db.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.STATE_TABLE} (
+                guild_id INTERGER NOT NULL,
+                channel_id INTEGER NOT NULL,
+                last_message_id TEXT,
+
+                PRIMARY KEY (guild_id, channel_id)
+            )
+            """
+        )
+
+        await self.db.commit()
 
     async def build_config_page(
         self,
@@ -356,39 +384,31 @@ class StickyMessage(Module):
     async def get_guild_config(
         self, 
         guild_id: int,
-        column: str | None = None
+        channel_id: int
     ):
-        config = await self.get_config(guild_id)
-        if config is None:
-            return None
-
-        data = config
-        if column is not None:
-            try:
-                data = config[column]
-            except KeyError:
-                pass
-
-        return data
+        return await self.db.fetchrow(
+            f"""
+            SELECT *
+            FROM {self.CONFIG_TABLE}
+            WHERE guild_id = ? AND channel_id = ?
+            """,
+            (guild_id, channel_id)
+        )
 
     
     async def get_guild_state(
         self,
         guild_id: int,
-        column: str | None = None
+        channel_id: int
     ):
-        config = await self.get_state(guild_id)
-        if config is None:
-            return None
-
-        data = config
-        if column is not None:
-            try:
-                data = config[column]
-            except KeyError:
-                pass
-
-        return data
+        return await self.db.fetchrow(
+            f"""
+            SELECT *
+            FROM {self.STATE_TABLE}
+            WHERE guild_id = ? AND channel_id = ?
+            """,
+            (guild_id, channel_id)
+        )
 
 
     @commands.Cog.listener()
@@ -424,12 +444,12 @@ class StickyMessage(Module):
                 return
                 
             if channel_config is None:
-                channel_config = await self.get_guild_config(guild_id)
+                channel_config = await self.get_guild_config(guild_id, message.channel.id)
                 if channel_config is None:
                     self.channel_cache[str(message.channel.id)] = False
                     return
 
-                state = await self.get_guild_state(guild_id)
+                state = await self.get_guild_state(guild_id,  message.channel.id)
                     
                 data = {
                     "message": channel_config["message"],
