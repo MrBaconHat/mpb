@@ -2,8 +2,15 @@ import discord
 from discord import ui, app_commands
 from discord.ext import commands
 
+from dataclasses import dataclass
+
 
 MAX_COMPONENTS = 40
+
+@dataclass(slots=True)
+class Container:
+    accent_color: str | None = None
+    items: list[ui.Item] | None = None
 
 
 class CV2BuilderUI(ui.LayoutView):
@@ -25,13 +32,18 @@ class CV2BuilderUI(ui.LayoutView):
 
     def render_components(self):
         for component in self.components_list:
-            if isinstance(component, list):
-                container = ui.Container()
-                for item in component: 
+            if isinstance(component, ui.Item):
+                self.add_item(component)
+                
+            elif isinstance(component, Container):
+                container = ui.Container(accent_color=component.accent_color)
+                items = component.items
+                if items is None:
+                    self.add_item(container)
+                    
+                for item in component.items: 
                     component.add_item(item)
                 continue
-                
-            self.add_item(component)
 
     def build_control(self):
         add_select_menu = ui.Select(
@@ -72,7 +84,7 @@ class CV2BuilderUI(ui.LayoutView):
                 )
             ]
         )
-        action_row = ActionRow(add_select_menu) 
+        action_row = ui.ActionRow(add_select_menu) 
         self.add_item(action_row)
 
 
