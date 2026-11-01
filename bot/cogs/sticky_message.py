@@ -425,41 +425,42 @@ class StickyMessage(Module):
         if not isinstance(message.channel, discord.TextChannel):
             return
 
-        enabled = await self.is_enabled(message.guild.id)
+        guild_id = int(message.guild.id)
+        channel_id = int(message.channel.id)
+
+        enabled = await self.is_enabled(guild_id)
         if not enabled:
             return
 
         lock = self.lock.setdefault(
-            str(message.channel.id), 
+            str(channel_id), 
             asyncio.Lock()
         )
 
         if lock.locked():
-            self.guild_channel_debounce[str(message.channel.id)] = datetime.now(timezone.utc)
+            self.guild_channel_debounce[str(channel_id)] = datetime.now(timezone.utc)
             return
 
         async with lock:
-            guild_id = int(message.guild.id)
-            
-            channel_config = self.channel_cache.get(str(message.channel.id))
+            channel_config = self.channel_cache.get(str(channel_id))
 
             if channel_config is False:
                 return
                 
             if channel_config is None:
-                channel_config = await self.get_guild_config(guild_id, message.channel.id)
+                channel_config = await self.get_guild_config(guild_id, channel_id)
                 if channel_config is None:
-                    self.channel_cache[str(message.channel.id)] = False
+                    self.channel_cache[str(channel_id)] = False
                     return
 
-                state = await self.get_guild_state(guild_id,  message.channel.id)
+                state = await self.get_guild_state(guild_id, channel_id)
                     
                 data = {
                     "message": channel_config["message"],
                     "last_message_id": state.get("last_message_id", None)
                 }
 
-                self.channel_cache[str(message.channel.id)] = data
+                self.channel_cache[str(channel_id)] = data
                 channel_config = data
 
             last_message_id = channel_config.get("last_message_id")
@@ -479,7 +480,7 @@ class StickyMessage(Module):
 
             while True:
                 timer = self.guild_channel_debounce.get(
-                    str(message.channel.id)
+                    str(channel_id)
                 )
 
                 if timer is None:
@@ -498,13 +499,13 @@ class StickyMessage(Module):
                 try:
                     await self.set_state(
                         guild_id,
-                        channel_id=message.channel.id,
+                        channel_id=channel_id,
                         last_message_id=str(new_message.id)
                     )
 
-                    self.channel_cache[str(message.channel.id)]["last_message_id"] = str(new_message.id)
+                    self.channel_cache[str(channel_id)]["last_message_id"] = str(new_message.id)
                 except KeyError:
-                    self.channel_cache.pop(str(message.channel.id), None)
+                    self.channel_cache.pop(str(channel_id), None)
                     pass
 
             except discord.NotFound:
@@ -513,7 +514,7 @@ class StickyMessage(Module):
                 #await config.delete(f"channels.{str(message.channel.id)}")
                 #await state.delete(str(message.channel.id))
 
-                self.channel_cache.pop(str(message.channel.id), None)
+                self.channel_cache.pop(str(channel_id), None)
 
             except discord.Forbidden:
                 pass
