@@ -145,6 +145,34 @@ class Module(commands.Cog):
             (guild_id,)
         )
 
+    async def set_state(
+        self, 
+        guild_id: int, 
+        **kwargs
+    ):
+        columns = list(kwargs.keys())
+        columns_str = ", ".join(key for key in columns)
+        placeholder = ", ".join("?" for _ in range(len(columns) + 1))
+        
+        values = (guild_id, *kwargs.values())
+
+        set_values = "\n".join(f"{column} = excluded.{column}" for column in columns)
+            
+        await self.db.execute(
+            f"""
+            INSERT INTO {self.STATE_TABLE} (
+                guild_id, 
+                {columns_str}
+            )
+            VALUES ({placeholder})
+            ON CONFLICT(guild_id)
+            DO UPDATE SET 
+                {set_values}
+            """,
+            values
+        )
+        await self.db.commit()
+
 
 class ModuleView(ui.LayoutView):
     def __init__(
