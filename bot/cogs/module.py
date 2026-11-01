@@ -105,6 +105,30 @@ class Module(commands.Cog):
             tuple(values)
         )
 
+    async def _get_records(
+        self,
+        table: str,
+        guild_id: int,
+        where: dict | None = None
+    ) -> aiosqlite.Row | None:
+        conditions = ["guild_id = ?"]
+        values = [guild_id]
+
+        if where:
+            conditions.extend(
+                f"{column} = ?" for column in where
+            )
+            values.extend(where.values())
+
+        return await self.db.fetchrow(
+            f"""
+            SELECT *
+            FROM {table}
+            WHERE {" AND ".join(conditions)}
+            """,
+            tuple(values)
+        )
+
     async def _insert_record(
         self,
         table: str,
@@ -204,6 +228,17 @@ class Module(commands.Cog):
             where
         )
 
+    async def get_configs(
+        self,
+        guild_id: int,
+        where: dict | None = None
+    ) -> list[aiosqlite.Row]:
+        return await self._get_records(
+            self.CONFIG_TABLE,
+            guild_id,
+            where
+        )
+
     async def insert_config(
         self,
         guild_id: int,
@@ -254,6 +289,17 @@ class Module(commands.Cog):
             where
         )
 
+    async def get_states(
+        self,
+        guild_id: int,
+        where: dict | None = None
+    ) -> list[aiosqlite.Row]:
+        return await self._get_records(
+            self.STATE_TABLE,
+            guild_id,
+            where
+        )
+
     async def insert_state(
         self,
         guild_id: int,
@@ -288,7 +334,6 @@ class Module(commands.Cog):
             guild_id,
             where
         )
-
 
 
 class ModuleView(ui.LayoutView):
