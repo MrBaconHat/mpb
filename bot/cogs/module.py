@@ -164,6 +164,31 @@ class Module(commands.Cog):
 
         await self.db.commit()
 
+    async def _delete_record(
+        self,
+        table: str,
+        guild_id: int,
+        where: dict | None = None
+    ):
+        conditions = ["guild_id = ?"]
+        values = [guild_id]
+
+        if where:
+            conditions.extend(
+                f"{column} = ?" for column in where
+            )
+            values.extend(where.values())
+
+        await self.db.execute(
+            f"""
+            DELETE FROM {table}
+            WHERE {" AND ".join(conditions)}
+            """,
+            tuple(values)
+        )
+
+        await self.db.commit()
+
     # ==============================
     # Configuration
     # ==============================
@@ -203,6 +228,17 @@ class Module(commands.Cog):
             **kwargs
         )
 
+    async def delete_config(
+        self,
+        guild_id: int,
+        where: dict | None = None
+    ):
+        await self._delete_record(
+            self.CONFIG_TABLE,
+            guild_id,
+            where
+        )
+
     # ==============================
     # State
     # ==============================
@@ -240,6 +276,17 @@ class Module(commands.Cog):
             guild_id,
             where,
             **kwargs
+        )
+
+    async def delete_config(
+        self,
+        guild_id: int,
+        where: dict | None = None
+    ):
+        await self._delete_record(
+            self.STATE_TABLE,
+            guild_id,
+            where
         )
 
 
