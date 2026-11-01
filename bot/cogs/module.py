@@ -109,15 +109,28 @@ class Module(commands.Cog):
         guild_id: int, 
         **kwargs
     ):
-        columns = tuple(list(kwargs.keys()))
-        columns_str = ",\n".join(key for key in columns)
-        values = tuple(list(kwargs.keys()))
+        columns = list(kwargs.keys())
+        columns_str = ", ".join(key for key in columns)
+        placeholder = ", ".join("?" for _ in range(len(columns) + 1))
+        
+        values = (guild_id, *kwargs.values())
+
+        set_values = "\n".join(f"{column} = excluded.{column}" for column in columns)
+            
         await self.db.execute(
             f"""
-            INSERT INTO {self.INTERNAL_NAME} (guild_id, {columns_str})
-            VALUES ({})
-            """
+            INSERT INTO {self.CONFIG_TABLE} (
+                guild_id, 
+                {columns_str}
+            )
+            VALUES ({placeholder})
+            ON CONFLICT(guild_id)
+            DO UPDATE SET 
+                {set_values}
+            """,
+            values
         )
+        await self.db.commit()
 
     async def get_state(
         self,
