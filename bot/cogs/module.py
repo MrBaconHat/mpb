@@ -324,7 +324,7 @@ class Module(commands.Cog):
             **kwargs
         )
 
-    async def delete_config(
+    async def delete_state(
         self,
         guild_id: int,
         where: dict | None = None
