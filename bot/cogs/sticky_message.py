@@ -364,6 +364,9 @@ class StickyMessage(Module):
 
         await self.db.commit()
 
+    async def cog_load(self):
+        await self.initialize()
+
     async def build_config_page(
         self,
         guild_id: str | int,
