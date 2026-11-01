@@ -318,7 +318,7 @@ class ConfigMenu(ui.LayoutView):
 class StickyMessage(Module):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.storage = bot.storage
+        #self.storage = bot.storage
 
         self.lock = TTLCache(maxsize=10000, ttl=60)
         
@@ -353,6 +353,43 @@ class StickyMessage(Module):
 
         return items
 
+    async def get_guild_config(
+        self, 
+        guild_id: int,
+        column: str | None = None
+    ):
+        config = await self.get_config(guild_id)
+        if config is None:
+            return None
+
+        data = config
+        if column is not None:
+            try:
+                data = config[column]
+            except KeyError:
+                pass
+
+        return data
+
+    
+    async def get_guild_state(
+        self,
+        guild_id: int,
+        column: str | None = None
+    ):
+        config = await self.get_state(guild_id)
+        if config is None:
+            return None
+
+        data = config
+        if column is not None:
+            try:
+                data = config[column]
+            except KeyError:
+                pass
+
+        return data
+
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -379,16 +416,7 @@ class StickyMessage(Module):
             return
 
         async with lock:
-            config = self.storage.get_module(
-                message.guild.id, 
-                self.INTERNAL_NAME, 
-                "config"
-            )
-            state = self.storage.get_module(
-                message.guild.id, 
-                self.INTERNAL_NAME, 
-                "state"
-            )
+            guild_id = int(message.guild.id)
             
             channel_config = self.channel_cache.get(str(message.channel.id))
 
@@ -396,14 +424,16 @@ class StickyMessage(Module):
                 return
                 
             if channel_config is None:
-                channel_config = await config.get(f"channels.{message.channel.id}")
+                channel_config = await self.get_guild_config(guild_id)
                 if channel_config is None:
                     self.channel_cache[str(message.channel.id)] = False
                     return
+
+                state = await self.get_guild_state(guild_id)
                     
                 data = {
                     "message": channel_config["message"],
-                    "last_message_id": await state.get(f"{message.channel.id}.last_message_id",  None)
+                    "last_message_id": state.get("last_message_id", None)
                 }
 
                 self.channel_cache[str(message.channel.id)] = data
@@ -443,10 +473,10 @@ class StickyMessage(Module):
             try:
                 new_message = await message.channel.send(channel_config.get("message"))
                 try:
-                    await state.update(
-                        str(message.channel.id),
-                        {"last_message_id": str(new_message.id)},
-                        strict_keys=True
+                    await self.set_state(
+                        guild_id,
+                        channel_id=message.channel.id,
+                        last_message_id=str(new_message.id)
                     )
 
                     self.channel_cache[str(message.channel.id)]["last_message_id"] = str(new_message.id)
@@ -455,8 +485,10 @@ class StickyMessage(Module):
                     pass
 
             except discord.NotFound:
-                await config.delete(f"channels.{str(message.channel.id)}")
-                await state.delete(str(message.channel.id))
+                # TODO: Add a method for deleting from config and state
+                
+                #await config.delete(f"channels.{str(message.channel.id)}")
+                #await state.delete(str(message.channel.id))
 
                 self.channel_cache.pop(str(message.channel.id), None)
 
