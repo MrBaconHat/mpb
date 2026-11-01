@@ -1,3 +1,5 @@
+# Discontinued project: Current components are not expressive enough to make cv2
+
 import discord
 from discord import ui, app_commands
 from discord.ext import commands
@@ -43,7 +45,6 @@ class CV2BuilderUI(ui.LayoutView):
                     
                 for item in component.items: 
                     component.add_item(item)
-                continue
 
     def build_control(self):
         add_select_menu = ui.Select(
