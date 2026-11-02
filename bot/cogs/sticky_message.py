@@ -38,7 +38,6 @@ class ConfigMenu(ui.LayoutView):
     async def initialize(self):
         config_rows = await self.module.get_configs(self.guild_id) or []
         state_rows = await self.module.get_states(self.guild_id) or []
-        print(config_rows)
         
         self.sm_chnl_cache = {
             str(row["channel_id"]): {
@@ -317,27 +316,20 @@ class ConfigMenu(ui.LayoutView):
             new_message = message.value
 
             if old_channel_id == new_channel_id:
-                print("old channel")
                 await self.sm_save(old_channel_id, new_message)
 
             else:
-                print("new channel added")
                 if str(new_channel_id) in self.sm_chnl_cache:
-                    print("new channel already exists")
                     await i.response.send_message(
                         f"<#{new_channel_id}> Already exists",
                         ephemeral=True
                     )
                     return
 
-                print("create new sm")
-                try:
-                    await self.sm_create(
-                        new_channel_id,
-                        new_message
-                    )
-                except Exception:
-                    traceback.print_exc()
+                await self.sm_create(
+                    new_channel_id,
+                    new_message
+                )
 
                 await self.sm_delete(old_channel_id)
 
@@ -453,29 +445,23 @@ class StickyMessage(Module):
                 return
                 
             if channel_config is None:
-                print("loading config")
                 channel_config = await self.get_config(
                     guild_id, 
                     where={"channel_id": channel_id}
                 )
-                print("config loaded")
                 if channel_config is None:
-                    print("config none")
                     self.channel_cache[str(channel_id)] = False
                     return
 
-                print("loading state")
                 state = await self.get_state(
                     guild_id, 
                     where={"channel_id": channel_id}
                 )
-                print("state loaded")
                     
                 data = {
                     "message": channel_config["message"],
                     "last_message_id": state["last_message_id"] if state else None
                 }
-                print(data)
 
                 self.channel_cache[str(channel_id)] = data
                 channel_config = data
