@@ -36,37 +36,49 @@ class ConfigMenu(ui.LayoutView):
 
 
     async def initialize(self):
-        self.sm_chnl_cache = await self.module.get_configs(self.guild_id) or {}
-        self.sm_chnl_state = await self.module.get_states(self.guild_id) or {}
+        config_rows = await self.module.get_configs(self.guild_id) or []
+        state_rows = await self.module.get_states(self.guild_id) or []
+        print(config_rows)
+        
+        self.sm_chnl_cache = {
+            str(row["channel_id"]): {
+                "message": row["message"]
+            }
+            for row in config_rows
+        }
+        self.sm_chnl_state = {
+            str(row["channel_id"]): {
+                "last_message_id": row["last_message_id"]
+            }
+            for row in state_rows
+        }
 
         await self.config_page()
 
     async def sm_save(self, channel_id: int, message: str):
-        await self.config.set(f"channels.{channel_id}.message", message)
+        await self.module.update_config(
+            self.guild_id,
+            where={"channel_id", channel_id},
+            message=message
+        )
         self.sm_chnl_cache[str(channel_id)] = {"message": message}
 
-        cached = self.module.channel_cache.get(str(channel_id))
-
-        last_message_id = (
-            cached.get("last_message_id")
-            if isinstance(cached, dict)
-            else None
-        )
-
-        await self.state.set(
-            f"{str(channel_id)}.last_message_id", last_message_id
-        )
-
-        self.module.channel_cache[str(channel_id)] = {
-            "message": message,
-            "last_message_id": last_message_id
-        }
+        cache = self.module.channel_cache.get(str(channel_id))
+        if cache is None or not isinstance(cache, dict):
+            self.module.channel_cache[str(channel_id)] = {}
+        self.module.channel_cache[str(channel_id)]["message"] = message
 
     async def sm_delete(self, channel_id: int):
         try:
-            await self.config.delete(f"channels.{channel_id}")
-            await self.state.delete(str(channel_id))
-        except KeyError:
+            await self.module.delete_config(
+                self.guild_id,
+                where={"channel_id": channel_id}
+            )
+            await self.module.delete_state(
+                self.guild_id,
+                where={"channel_id": channel_id}
+            )
+        except Exception:
             pass
 
         self.sm_chnl_cache.pop(str(channel_id), None)
