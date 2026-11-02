@@ -1,5 +1,6 @@
 import aiosqlite
 import traceback
+from cachetools import TTLCache
 
 import discord
 from discord import ui, app_commands
@@ -27,6 +28,8 @@ class Module(commands.Cog):
         self.CONFIG_TABLE = config_table
         self.STATE_TABLE = state_table
 
+        self.__enabled_cache = TTLCache(maxsize=5000, ttl=300)
+
     async def build_config_page(
         self,
         guild_id: str | int,
@@ -39,6 +42,10 @@ class Module(commands.Cog):
     # ==============================
 
     async def is_enabled(self, guild_id: int) -> bool:
+        key = (guild_id, self.INTERNAL_NAME)
+        if key in self.__enabled_cache:
+            return self.__enabled_cache[key]
+            
         row = await self.db.fetchrow(
             """
             SELECT is_enabled
@@ -49,7 +56,9 @@ class Module(commands.Cog):
             (guild_id, self.INTERNAL_NAME)
         )
 
-        return bool(row["is_enabled"]) if row else False
+        enabled = bool(row["is_enabled"]) if row else False
+        self.__enabled_cache[key] = enabled
+        return enabled
 
     async def set_enabled(
         self,
@@ -71,6 +80,9 @@ class Module(commands.Cog):
         )
 
         await self.db.commit()
+        
+        key = (guild_id, self.INTERNAL_NAME)
+        self._enabled_cache[key] = enabled
         return enabled
 
     async def toggle(self, guild_id: int) -> bool:
