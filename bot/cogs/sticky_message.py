@@ -317,22 +317,26 @@ class ConfigMenu(ui.LayoutView):
             new_message = message.value
 
             if old_channel_id == new_channel_id:
+                print("old channel")
                 await self.sm_save(old_channel_id, new_message)
 
             else:
+                print("new channel added")
                 if str(new_channel_id) in self.sm_chnl_cache:
+                    print("new channel already exists")
                     await i.response.send_message(
                         f"<#{new_channel_id}> Already exists",
                         ephemeral=True
                     )
                     return
 
+                print("create new sm")
                 await self.sm_create(
-                    channel_id,
+                    new_channel_id,
                     message
                 )
 
-                await self.sm_delete(channel_id)
+                await self.sm_delete(old_channel_id)
 
             await self.config_page()
             await self.parent_view.update_module_page(self)
