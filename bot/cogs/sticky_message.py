@@ -513,8 +513,6 @@ class StickyMessage(Module):
                     cached["last_message_id"] = str(new_message.id)
 
             except discord.NotFound:
-                # TODO: Add a method for deleting from config and state
-
                 await self.delete_config(
                     guild_id,
                     where={"channel_id": channel_id}
@@ -523,9 +521,6 @@ class StickyMessage(Module):
                     guild_id,
                     where={"channel_id": channel_id}
                 )
-                
-                #await config.delete(f"channels.{str(message.channel.id)}")
-                #await state.delete(str(message.channel.id))
 
                 self.channel_cache.pop(str(channel_id), None)
 
