@@ -62,7 +62,7 @@ class ConfigMenu(ui.LayoutView):
             message=message
         )
 
-        await self.mldule.insert_state(
+        await self.module.insert_state(
             self.guild_id,
             channel_id=channel_id,
             last_message_id=None
