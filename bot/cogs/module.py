@@ -348,9 +348,13 @@ class ModuleView(ui.LayoutView):
         self.modules = modules
         
         self.pages: dict[str, list[ui.Item]] = {}
+        
         # Buttons or select menus disabled by toggle button
         self.disabled_interactables: dict[str, list[ui.Item]] = {}
         self.selected_page = None
+
+        self.TOGGLE_ON = "<:t_on:1566847934278926478>"
+        self.TOGGLE_OFF = "<:t_off:1566847920228007937>"
 
         self.page_size = 22
         self.min = 0
@@ -429,7 +433,7 @@ class ModuleView(ui.LayoutView):
         
         is_enabled = config.get("is_enabled", False)
         module_toggle_button = ui.Button(
-            emoji="<:toggle_off:1552010483710689391>" if not is_enabled else "<:toggle_on:1552010109285175356>",
+            emoji=self.TOGGLE_OFF if not is_enabled else self.TOGGLE_ON,
             custom_id=f"toggle:{module.INTERNAL_NAME}"
         )
         module_toggle_button.callback = self.toggle_button_callback
