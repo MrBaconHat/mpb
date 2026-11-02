@@ -55,10 +55,33 @@ class ConfigMenu(ui.LayoutView):
 
         await self.config_page()
 
+    async def sm_create(self, channel_id: int, message: str):
+        await self.module.insert_config(
+            self.guild_id,
+            channel_id=channel_id,
+            message=message
+        )
+
+        await self.mldule.insert_state(
+            self.guild_id,
+            channel_id=channel_id,
+            last_message_id=None
+        )
+        
+        self.sm_chnl_cache[str(channel_id)] = {
+        "message": message
+    }
+        
+        self.sm_chnl_state[str(channel_id)] = {
+        "last_message_id": None
+    }
+
+        self.module.channel_cache.pop(str(channel_id), None)
+
     async def sm_save(self, channel_id: int, message: str):
         await self.module.update_config(
             self.guild_id,
-            where={"channel_id", channel_id},
+            where={"channel_id": channel_id},
             message=message
         )
         self.sm_chnl_cache[str(channel_id)] = {"message": message}
@@ -69,17 +92,14 @@ class ConfigMenu(ui.LayoutView):
         self.module.channel_cache[str(channel_id)]["message"] = message
 
     async def sm_delete(self, channel_id: int):
-        try:
-            await self.module.delete_config(
-                self.guild_id,
-                where={"channel_id": channel_id}
-            )
-            await self.module.delete_state(
-                self.guild_id,
-                where={"channel_id": channel_id}
-            )
-        except Exception:
-            pass
+        await self.module.delete_config(
+            self.guild_id,
+            where={"channel_id": channel_id}
+        )
+        await self.module.delete_state(
+            self.guild_id,
+            where={"channel_id": channel_id}
+        )
 
         self.sm_chnl_cache.pop(str(channel_id), None)
         self.sm_chnl_state.pop(str(channel_id), None)
@@ -191,7 +211,7 @@ class ConfigMenu(ui.LayoutView):
             channel = channel_select.values[0]
             message_content = message.value
 
-            await self.sm_save(channel.id, message_content)
+            await self.sm_create(channel.id, message_content)
             await self.config_page()
             await self.parent_view.update_module_page(self)
             await i.response.edit_message(view=self.parent_view)
@@ -242,11 +262,7 @@ class ConfigMenu(ui.LayoutView):
         async def on_sm_delete_modal_submit(interaction: discord.Interaction):
             selected_sms = sm_select.values
             for chnl_id in selected_sms:
-                try:
-                    await self.sm_delete(chnl_id)
-
-                except KeyError:
-                    continue
+                await self.sm_delete(chnl_id)
 
             await self.config_page()
             await self.parent_view.update_module_page(self)
@@ -300,15 +316,23 @@ class ConfigMenu(ui.LayoutView):
             new_channel_id = channel_select.values[0].id
             new_message = message.value
 
-            await self.sm_save(new_channel_id, new_message)
+            if old_channel_id == new_channel_id:
+                await self.sm_save(old_channel_id, new_message)
 
-            if old_channel_id != new_channel_id:
-                last_message_id = await self.state.get(str(old_channel_id))
-                if last_message_id:
-                    await self.state.set(str(new_channel_id), last_message_id)
-                    self.module.channel_cache[str(new_channel_id)]["last_message_id"] = last_message_id
-                    
-                await self.sm_delete(old_channel_id)
+            else:
+                if str(new_channel_id) in self.sm_chnl_cache:
+                    await i.response.send_message(
+                        f"<#{new_channel_id}> Already exists",
+                        ephemeral=True
+                    )
+                    return
+
+                await self.sm_create(
+                    channel_id,
+                    message
+                )
+
+                await self.sm_delete(channel_id)
 
             await self.config_page()
             await self.parent_view.update_module_page(self)
