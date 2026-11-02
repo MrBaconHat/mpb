@@ -346,7 +346,6 @@ class ConfigMenu(ui.LayoutView):
 class StickyMessage(Module):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        #self.storage = bot.storage
         self.db = bot.db
 
         self.lock = TTLCache(maxsize=10000, ttl=60)

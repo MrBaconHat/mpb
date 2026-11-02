@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 
-from bot.storage import Storage
 from bot.database import Database
 
 import os
@@ -19,7 +18,6 @@ class MyBot(commands.Bot):
         
         intents = discord.Intents.all()
 
-        self.storage = Storage()
         self.db = Database("data/mpb.db")
         
         super().__init__(command_prefix="/", intents=intents, help_command=None)
