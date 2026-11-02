@@ -379,7 +379,7 @@ class StickyMessage(Module):
         await self.db.execute(
             f"""
             CREATE TABLE IF NOT EXISTS {self.STATE_TABLE} (
-                guild_id INTERGER NOT NULL,
+                guild_id INTEGER NOT NULL,
                 channel_id INTEGER NOT NULL,
                 last_message_id TEXT,
 
