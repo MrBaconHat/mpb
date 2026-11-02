@@ -110,7 +110,7 @@ class Module(commands.Cog):
         table: str,
         guild_id: int,
         where: dict | None = None
-    ) -> aiosqlite.Row | None:
+    ) -> list[aiosqlite.Row] | None:
         conditions = ["guild_id = ?"]
         values = [guild_id]
 
@@ -120,7 +120,7 @@ class Module(commands.Cog):
             )
             values.extend(where.values())
 
-        return await self.db.fetchrow(
+        return await self.db.fetch(
             f"""
             SELECT *
             FROM {table}
