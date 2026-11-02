@@ -82,7 +82,7 @@ class Module(commands.Cog):
         await self.db.commit()
         
         key = (guild_id, self.INTERNAL_NAME)
-        self._enabled_cache[key] = enabled
+        self.__enabled_cache[key] = enabled
         return enabled
 
     async def toggle(self, guild_id: int) -> bool:
