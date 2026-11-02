@@ -331,10 +331,13 @@ class ConfigMenu(ui.LayoutView):
                     return
 
                 print("create new sm")
-                await self.sm_create(
-                    new_channel_id,
-                    message
-                )
+                try:
+                    await self.sm_create(
+                        new_channel_id,
+                        new_message
+                    )
+                except Exception:
+                    traceback.print_exc()
 
                 await self.sm_delete(old_channel_id)
 
