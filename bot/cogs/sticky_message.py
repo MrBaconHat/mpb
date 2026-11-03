@@ -1,17 +1,15 @@
 import asyncio
 import traceback
 
+from copy import deepcopy
+from cachetools import TTLCache
+from datetime import datetime, timezone
+
 import discord
 from discord import ui
 from discord.ext import commands
 
-from datetime import datetime, timezone
-
 from bot.cogs.module import Module
-
-from cachetools import TTLCache
-
-from copy import deepcopy
 
 
 class ConfigMenu(ui.LayoutView):
