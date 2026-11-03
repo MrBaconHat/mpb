@@ -524,6 +524,23 @@ class StickyMessage(Module):
             except discord.Forbidden:
                 pass
 
+    @commands.Cog.listener()
+    async def on_guild_channel_delete(self, channel):
+        if not isinstance(channel, discord.TextChannel):
+            return
+
+        channel_id = str(channel.id)
+        guild_id = channel.guild.id
+
+        cached = self.channel_cache.get(channel_id, None)
+        if cached is False:
+            return
+
+        await self.delete_config(guild_id, where={"channel_id": channel_id})
+        await self.delete_state(guild_id, where={"channel_id": channel_id})
+
+        self.channel_cache.pop(channel_id,  None)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(StickyMessage(bot))
