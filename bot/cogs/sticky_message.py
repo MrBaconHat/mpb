@@ -66,12 +66,12 @@ class ConfigMenu(ui.LayoutView):
         )
         
         self.sm_chnl_cache[str(channel_id)] = {
-        "message": message
-    }
+            "message": message
+        }
         
         self.sm_chnl_state[str(channel_id)] = {
-        "last_message_id": None
-    }
+            "last_message_id": None
+        }
 
         self.module.channel_cache.pop(str(channel_id), None)
 
