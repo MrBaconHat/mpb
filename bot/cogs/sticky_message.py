@@ -536,8 +536,8 @@ class StickyMessage(Module):
         if cached is False:
             return
 
-        await self.delete_config(guild_id, where={"channel_id": channel_id})
-        await self.delete_state(guild_id, where={"channel_id": channel_id})
+        await self.delete_config(guild_id, where={"channel_id": int(channel_id)})
+        await self.delete_state(guild_id, where={"channel_id": int(channel_id)})
 
         self.channel_cache.pop(channel_id,  None)
 
