@@ -1,16 +1,16 @@
-import discord
-from discord.ext import commands
-
-from bot.database import Database
-
 import os
 import traceback
+
+from dotenv import load_dotenv
+load_dotenv()
 
 from colorama import Fore, Style, init
 init(autoreset=True)
 
-from nestio.env import Env
-from nestio.files import JSON
+import discord
+from discord.ext import commands
+
+from bot.database import Database
 
 
 class MyBot(commands.Bot):
@@ -59,7 +59,7 @@ class MyBot(commands.Bot):
         )
 
     async def start_bot(self):
-        token = Env().get("DISCORD_BOT_TOKEN", None)
+        token = os.environ.get("DISCORD_BOT_TOKEN", None)
         if token is None:
             print(
                 Fore.RED + Style.BRIGHT +
