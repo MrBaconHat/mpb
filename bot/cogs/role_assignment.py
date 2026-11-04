@@ -37,7 +37,11 @@ class ConfigMenu(ui.LayoutView):
                     "message_id": message_id,
                     "jump_url": jump_url
                 },
-                "configuration": {}
+                "configuration": {
+                    "header": None, # "Color Roles"
+                    "description": None, # "Select your favorite color!"
+                    "roles": None # Will be a dictionary with each role ID holding its button information such as button label and color.
+                }
             }
 
 
