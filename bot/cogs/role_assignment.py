@@ -70,7 +70,7 @@ class RoleAssignment(Module):
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: discord.Interaction):
-        if not self.is_enabled(interaction.guild):
+        if not await self.is_enabled(interaction.guild):
             return
 
         if interaction.guild is None:
