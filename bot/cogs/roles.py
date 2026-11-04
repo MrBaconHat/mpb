@@ -20,6 +20,8 @@ class RoleAssignment(Module):
             state_table="role_assignment_table"
         )
 
+        self.message_ra_cache = TTLCache(maxsize=5000, ttl=300)
+
     async def initialize(self):
         await self.db.execute(f"""
         CREATE TABLE IS NOT EXISTS {self.CONFIG_TABLE} (
@@ -30,17 +32,46 @@ class RoleAssignment(Module):
         )
         """)
 
-    def extract_data(self, version: str, data: str):
+    async def assign_role(self, interaction: discord.interaction, version: str, data: str):
+        guild = interaction.guild
+        member = interaction.user
+        
         if version == "v1":
             config_version = data[0]
-            action = data[1]
             role_id = data[2]
+            
+            role = guild.get_role(role_id)
+            if role is None:
+                await interaction.response.send_message(
+                    "This role no longer exists or isn't accessible to me.",
+                    ephemeral=True
+                )
+                return
 
-        else:
-            raise ValueError(f"Invalid Version: {version}")
+            try:
+                if role in member.roles:
+                    await member.add_roles(role, reason="Role Assignment")
+                else:
+                    await member.remove_roles(role, reason="Role Assignment")
+
+            except discord.Forbidden:
+                await interaction.response.send_message(
+                    f"I don't have permission to mamage this role.",
+                    ephemeral=True
+                )
+
+            except discord.NotFound:
+                await interaction.response.send_message(
+                    "Role not found.",
+                    ephemeral=True
+                )
+                
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: discord.Interaction):
+        if interaction.guild is None:
+            return
+            
         if interaction.type is not discord.InteractionType.component:
             return
 
@@ -59,10 +90,12 @@ class RoleAssignment(Module):
             prefix = split_data[0]
             version = split_data[1]
 
-            self.extract_data(version, split_data[2:])
-        except ValueError:
-            return
-        
+            await self.assign_role(
+                interaction=interaction,
+                version=version, 
+                data=split_data[2:]
+            )
+            
         except IndexError:
             return
 
