@@ -33,7 +33,7 @@ class RoleAssignment(Module):
         )
         """)
 
-    async def assign_role(self, interaction: discord.interaction, version: str, data: str):
+    async def assign_role(self, interaction: discord.Interaction, version: str, data: str):
         guild = interaction.guild
         member = interaction.user
         
