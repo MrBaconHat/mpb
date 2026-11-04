@@ -26,11 +26,8 @@ class ConfigMenu(ui.LayoutView):
             message_id = row["message_id"]
 
             jump_url = f"https://discord.com/channels/{guild_id}/{channel_id}/{message_id}"
-
-            if channel_id not in self.ra_config:
-                self.ra_config[str(channel_id)] = {}
-                
-            self.ra_config[str(channel_id)][str(message_id)] = {
+            
+            self.ra_config[str(message_id)] = {
                 "metadata": {
                     "guild_id": guild_id,
                     "channel_id": channel_id,
