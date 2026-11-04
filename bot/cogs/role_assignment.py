@@ -101,6 +101,10 @@ class RoleAssignment(Module):
             )
             
         except IndexError:
+            await interaction.response.send_message(
+                "Something went wrong.",
+                ephemeral=True
+            )
             return
 
 
