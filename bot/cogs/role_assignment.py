@@ -142,6 +142,25 @@ class RoleAssignment(Module):
             )
             return
 
+    @commands.Cog.listener()
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
+        if payload.guild_id is None:
+            return
+
+        if payload.cached_message:
+            msg = payload.cached_message
+
+            if not msg.components:
+                return
+
+            if msg.author.id != self.bot.user.id:
+                return
+
+        await self.db.delete_config(
+            payload.guild_id, 
+            where={"message_id": int(payload.message_id)}
+        )
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(RoleAssignment(bot))
