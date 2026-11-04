@@ -9,6 +9,38 @@ from discord.ext import commands
 from bot.cogs.module import Module
 
 
+class ConfigMenu(ui.LayoutView):
+    def __init__(self, guild_id: int, module_class, parent):
+        self.guild_id = guild_id
+        self.module_class = module_class
+        self.parent = parent
+
+        self.ra_config = {}
+
+    async def initializs(self):
+        config = await self.db.get_configs(self.guild_id) or []
+
+        for row in config:
+            guild_id = row["guild_id"]
+            channel_id = row["channel_id"]
+            message_id = row["message_id"]
+
+            jump_url = f"https://discord.com/channels/{guild_id}/{channel_id}/{message_id}"
+
+            if channel_id not in self.ra_config:
+                self.ra_config[str(channel_id)] = {}
+                
+            self.ra_config[str(channel_id)][str(message_id)] = {
+                "metadata": {
+                    "guild_id": guild_id,
+                    "channel_id": channel_id,
+                    "message_id": message_id,
+                    "jump_url": jump_url
+                },
+                "configuration": {}
+            }
+
+
 class RoleAssignment(Module):
     def __init__(self, bot: commands.Bot):
         super().__init__(
@@ -19,6 +51,8 @@ class RoleAssignment(Module):
             config_table="role_assignment_config",
             state_table="role_assignment_table"
         )
+
+        self.db = self.bot.db
 
         self.message_ra_cache = TTLCache(maxsize=5000, ttl=300)
 
