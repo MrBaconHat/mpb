@@ -27,7 +27,8 @@ class RoleAssignment(Module):
         CREATE TABLE IS NOT EXISTS {self.CONFIG_TABLE} (
             guild_id INTEGER NOT NULL,
             channel_id INTEGER NOT NULL,
-            message_id INTEGER NOT NULL
+            message_id INTEGER NOT NULL,
+            version INTEGER NOT NULL DEFAULT 1
             PRIMARY KEY (message_id)
         )
         """)
