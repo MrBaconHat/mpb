@@ -51,7 +51,7 @@ class RoleAssignmentCallbacks:
     async def on_button_callback(self, interaction: discord.Interaction):
         ...
 
-    async def on_select_menu_callbacl(self, interaction: discord.Interaction):
+    async def on_select_menu_callback(self, interaction: discord.Interaction):
         ...
 
 
@@ -68,7 +68,7 @@ class RoleAssignment(Module):
 
         self.db = self.bot.db
 
-        self._callbacks = RoleAssignmentCallbacks()
+        self._callbacks = RoleAssignmentCallbacks(bot)
 
         self.message_ra_cache = TTLCache(maxsize=5000, ttl=300)
 
@@ -113,9 +113,10 @@ class RoleAssignment(Module):
         component_type = interaction.data["component_type"]
 
         if component_type == discord.ComponentType.button.value:
-            await self.callbacks.on_button_callback(interaction)
+            await self._callbacks.on_button_callback(interaction)
 
-        elif component_type == discord.Compo
+        elif component_type == discord.ComponentType.button.value:
+            await self._callbacks.on_select_menu_callback(interaction)
     
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
