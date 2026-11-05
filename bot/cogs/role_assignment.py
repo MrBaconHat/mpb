@@ -59,7 +59,7 @@ class RoleAssignment(Module):
 
     async def initialize(self):
         await self.db.execute(f"""
-        CREATE TABLE IS NOT EXISTS {self.CONFIG_TABLE} (
+        CREATE TABLE IF NOT EXISTS {self.CONFIG_TABLE} (
             guild_id INTEGER NOT NULL,
             channel_id INTEGER NOT NULL,
             message_id INTEGER NOT NULL,
