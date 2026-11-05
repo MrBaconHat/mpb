@@ -541,17 +541,6 @@ class StickyMessage(Module):
 
         self.channel_cache.pop(channel_id,  None)
 
-        @commands.Cog.listener()
-        async def on_guild_channel_delete(self, channel):
-            await self.delete_config(
-                channel.guild.id,
-                where={"channel_id": channel.id}
-            )
-            await self.delete_state(
-                channel.guild.id,
-                where={"channel_id": channel.id}
-            )
-
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(StickyMessage(bot))
