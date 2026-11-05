@@ -379,7 +379,7 @@ class StickyMessage(Module):
             CREATE TABLE IF NOT EXISTS {self.STATE_TABLE} (
                 guild_id INTEGER NOT NULL,
                 channel_id INTEGER NOT NULL,
-                last_message_id TEXT,
+                last_message_id INTEGER,
 
                 PRIMARY KEY (guild_id, channel_id)
             )
@@ -540,6 +540,17 @@ class StickyMessage(Module):
         await self.delete_state(guild_id, where={"channel_id": int(channel_id)})
 
         self.channel_cache.pop(channel_id,  None)
+
+        @commands.Cog.listener()
+        async def on_guild_channel_delete(self, channel):
+            await self.delete_config(
+                channel.guild.id,
+                where={"channel_id": channel.id}
+            )
+            await self.delete_state(
+                channel.guild.id,
+                where={"channel_id": channel.id}
+            )
 
 
 async def setup(bot: commands.Bot):
