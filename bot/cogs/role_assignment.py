@@ -93,9 +93,9 @@ class RoleAssignment(Module):
 
             try:
                 if role in member.roles:
-                    await member.add_roles(role, reason="Role Assignment")
-                else:
                     await member.remove_roles(role, reason="Role Assignment")
+                else:
+                    await member.add_roles(role, reason="Role Assignment")
 
             except discord.Forbidden:
                 await interaction.response.send_message(
