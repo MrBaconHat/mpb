@@ -15,9 +15,11 @@ class ConfigMenu(ui.LayoutView):
         self.module_class = module_class
         self.parent = parent
 
+        self.db = module_class.db
+
         self.ra_config = {}
 
-    async def initializs(self):
+    async def initialize(self):
         config = await self.db.get_configs(self.guild_id) or []
 
         for row in config:
