@@ -12,7 +12,7 @@ from bot.cogs.module import Module
 class ConfigMenu(ui.LayoutView):
     def __init__(self, guild_id: int, module_class, parent):
         self.guild_id = guild_id
-        self.module_class = module_class
+        self.module = module_class
         self.parent = parent
 
         self.db = module_class.db
@@ -20,7 +20,7 @@ class ConfigMenu(ui.LayoutView):
         self.ra_config = {}
 
     async def initialize(self):
-        config = await self.db.get_configs(self.guild_id) or []
+        config = await self.module.get_configs(self.guild_id) or []
 
         for row in config:
             guild_id = row["guild_id"]
@@ -65,7 +65,7 @@ class RoleAssignment(Module):
             guild_id INTEGER NOT NULL,
             channel_id INTEGER NOT NULL,
             message_id INTEGER NOT NULL,
-            version INTEGER NOT NULL DEFAULT 1
+            version INTEGER NOT NULL DEFAULT 1,
             PRIMARY KEY (message_id)
         )
         """)
@@ -75,13 +75,15 @@ class RoleAssignment(Module):
         ON {self.CONFIG_TABLE} (guild_id, channel_id)
         """)
 
+        await self.db.commit()
+
     async def assign_role(self, interaction: discord.Interaction, version: str, data: str):
         guild = interaction.guild
         member = interaction.user
         
         if version == "v1":
             config_version = data[0]
-            role_id = data[2]
+            role_id = int(data[2])
             
             role = guild.get_role(role_id)
             if role is None:
@@ -99,7 +101,7 @@ class RoleAssignment(Module):
 
             except discord.Forbidden:
                 await interaction.response.send_message(
-                    f"I don't have permission to mamage this role.",
+                    f"I don't have permission to manage this role.",
                     ephemeral=True
                 )
 
