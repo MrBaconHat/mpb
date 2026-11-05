@@ -112,9 +112,6 @@ class RoleAssignment(Module):
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: discord.Interaction):
-        if not await self.is_enabled(interaction.guild):
-            return
-
         if interaction.guild is None:
             return
             
@@ -126,7 +123,10 @@ class RoleAssignment(Module):
         if custom_id is None:
             return
 
-        if not custom_id.startswith("ra"):
+        if not custom_id.startswith("ra:"):
+            return
+
+        if not await self.is_enabled(interaction.guild.id):
             return
 
         split_data = custom_id.split(":")
