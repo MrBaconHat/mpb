@@ -44,6 +44,17 @@ class ConfigMenu(ui.LayoutView):
             }
 
 
+class RoleAssignmentCallbacks:
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+    async def on_button_callback(self, interaction: discord.Interaction):
+        ...
+
+    async def on_select_menu_callbacl(self, interaction: discord.Interaction):
+        ...
+
+
 class RoleAssignment(Module):
     def __init__(self, bot: commands.Bot):
         super().__init__(
@@ -56,6 +67,8 @@ class RoleAssignment(Module):
         )
 
         self.db = self.bot.db
+
+        self._callbacks = RoleAssignmentCallbacks()
 
         self.message_ra_cache = TTLCache(maxsize=5000, ttl=300)
 
@@ -76,37 +89,7 @@ class RoleAssignment(Module):
         """)
 
         await self.db.commit()
-
-    async def assign_role(self, interaction: discord.Interaction, config_version: str, role_id: int) -> bool | None:
-        guild = interaction.guild
-        member = interaction.user
-            
-        role = guild.get_role(role_id)
-        if role is None:
-            await interaction.response.send_message(
-                "This role no longer exists or isn't accessible to me.",
-                ephemeral=True
-            )
-            return None
-
-        try:
-            if role in member.roles:
-                await member.remove_roles(role, reason="Role Assignment")
-            else:
-                await member.add_roles(role, reason="Role Assignment")
-
-        except discord.Forbidden:
-            await interaction.response.send_message(
-                f"I don't have permission to manage this role.",
-                ephemeral=True
-            )
-
-        except discord.NotFound:
-            await interaction.response.send_message(
-                "Role not found.",
-                ephemeral=True
-            )
-                
+    
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: discord.Interaction):
@@ -127,30 +110,12 @@ class RoleAssignment(Module):
         if not await self.is_enabled(interaction.guild.id):
             return
 
-        split_data = custom_id.split(":")
+        component_type = interaction.data["component_type"]
 
-        # Strict pattern across all versions.
-        prefix = split_data[0]
-        version = split_data[1]
+        if component_type == discord.ComponentType.button.value:
+            await self.callbacks.on_button_callback(interaction)
 
-        try:
-            custom_ids = []
-            if isinstance(interaction.data, discord.ButtonInteractionData):
-                custom_ids.append()
-
-            await self.assign_role(
-                interaction=interaction,
-                version=version, 
-                data=split_data[2:]
-            )
-            
-        except IndexError:
-            await interaction.response.send_message(
-                "Something went wrong.",
-                ephemeral=True
-            )
-            return
-
+        elif component_type == discord.Compo
     
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
