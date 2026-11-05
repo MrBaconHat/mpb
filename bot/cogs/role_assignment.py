@@ -77,39 +77,35 @@ class RoleAssignment(Module):
 
         await self.db.commit()
 
-    async def assign_role(self, interaction: discord.Interaction, version: str, data: str):
+    async def assign_role(self, interaction: discord.Interaction, config_version: str, role_id: int) -> bool | None:
         guild = interaction.guild
         member = interaction.user
-        
-        if version == "v1":
-            config_version = data[0]
-            role_id = int(data[2])
             
-            role = guild.get_role(role_id)
-            if role is None:
-                await interaction.response.send_message(
-                    "This role no longer exists or isn't accessible to me.",
-                    ephemeral=True
-                )
-                return
+        role = guild.get_role(role_id)
+        if role is None:
+            await interaction.response.send_message(
+                "This role no longer exists or isn't accessible to me.",
+                ephemeral=True
+            )
+            return None
 
-            try:
-                if role in member.roles:
-                    await member.remove_roles(role, reason="Role Assignment")
-                else:
-                    await member.add_roles(role, reason="Role Assignment")
+        try:
+            if role in member.roles:
+                await member.remove_roles(role, reason="Role Assignment")
+            else:
+                await member.add_roles(role, reason="Role Assignment")
 
-            except discord.Forbidden:
-                await interaction.response.send_message(
-                    f"I don't have permission to manage this role.",
-                    ephemeral=True
-                )
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                f"I don't have permission to manage this role.",
+                ephemeral=True
+            )
 
-            except discord.NotFound:
-                await interaction.response.send_message(
-                    "Role not found.",
-                    ephemeral=True
-                )
+        except discord.NotFound:
+            await interaction.response.send_message(
+                "Role not found.",
+                ephemeral=True
+            )
                 
 
     @commands.Cog.listener()
@@ -133,10 +129,14 @@ class RoleAssignment(Module):
 
         split_data = custom_id.split(":")
 
+        # Strict pattern across all versions.
+        prefix = split_data[0]
+        version = split_data[1]
+
         try:
-            # Strict pattern across all versions.
-            prefix = split_data[0]
-            version = split_data[1]
+            custom_ids = []
+            if isinstance(interaction.data, discord.ButtonInteractionData):
+                custom_ids.append()
 
             await self.assign_role(
                 interaction=interaction,
