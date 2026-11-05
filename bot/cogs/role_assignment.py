@@ -68,6 +68,11 @@ class RoleAssignment(Module):
         )
         """)
 
+        await self.db.execute(f"""
+        CREATE INDEX IF NOT EXISTS idx_{self.CONFIG_TABLE}_guild_channel
+        ON {self.CONFIG_TABLE} (guild_id, channel_id)
+        """)
+
     async def assign_role(self, interaction: discord.Interaction, version: str, data: str):
         guild = interaction.guild
         member = interaction.user
