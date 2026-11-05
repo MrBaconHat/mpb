@@ -142,6 +142,7 @@ class RoleAssignment(Module):
             )
             return
 
+    
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
         if payload.guild_id is None:
@@ -159,6 +160,14 @@ class RoleAssignment(Module):
         await self.db.delete_config(
             payload.guild_id, 
             where={"message_id": int(payload.message_id)}
+        )
+
+
+    @commands.Cog.listener()
+    async def on_guild_channel_delete(self, channel):
+        await self.db.delete_config(
+            channel.guild.id,
+            where={"channel_id": channel.id}
         )
 
 
