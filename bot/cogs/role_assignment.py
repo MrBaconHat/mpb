@@ -44,12 +44,69 @@ class ConfigMenu(ui.LayoutView):
             }
 
 
+class DataExtractor:
+    def __init__(self):
+        self.extractors = {"v1": self._v1_data_extractor}
+
+    def _v1_data_extractor(self, data: list[str]):
+        prefix = None
+        version = None
+        config_version = None
+        role_id = None
+        
+        try:
+            prefix = data[0]
+            version = data[1]
+            config_version = data[2]
+            role_id = data[3]
+        except IndexError:
+            pass
+
+        return (prefix, version, config_version, role_id)
+            
+    def extract(self, data: str):
+        split_data = data.split(":")
+        
+        prefix = split_data[0]
+        version = split_data[1]
+
+        extractor = self.extractors.get(version)
+        if extractor is None:
+            raise ValueError("Invalid Version")
+            
+        return extractor(split_data)
+
+
 class RoleAssignmentCallbacks:
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
+    def __init__(self, module):
+        self.module = module
+        self.bot = module.bot
+
+        self.extract = DataExtractor()
 
     async def on_button_callback(self, interaction: discord.Interaction):
-        ...
+        custom_id = interaction.data["custom_id"]
+        prefix, version, config_version, role_id = self.extract.extract(custom_id)
+
+        guild = interaction.guild
+        member = interaction.user
+        role = guild.get_role(role_id)
+
+        user_facing_message = ""
+
+        try:
+            if role in member.roles:
+                await member.remove_roles(role, reason="Role Assignment")
+                user_facing_message = f"**Successfully:** Removed {role.mention} from you."
+                
+            else:
+                await member.add_roles(role, reason="Role Assignment")
+                user_facing_message = f"**Successfully:** Added {role.mention} to you."
+                
+        except discord.Forbidden:
+            user_facing_message = f"**Error:** I do not have permission to add roles. \nPlease make sure i have **Manage Roles** permission and my role is above: {role.mention}"
+
+        await interaction.response.send_message(user_facing_message)
 
     async def on_select_menu_callback(self, interaction: discord.Interaction):
         ...
@@ -68,9 +125,15 @@ class RoleAssignment(Module):
 
         self.db = self.bot.db
 
-        self._callbacks = RoleAssignmentCallbacks(bot)
+        self._callbacks = RoleAssignmentCallbacks(self)
+
+        self.global_lock = asyncio.Lock()
+        self.update_locks = TTLCache(maxsize=5000, ttl=60)
 
         self.message_ra_cache = TTLCache(maxsize=5000, ttl=300)
+        # {
+        #     "message_id": {"headers": "hi", "description": "roles!", "roles": [...], "config_version": 1}
+        # }
 
     async def initialize(self):
         await self.db.execute(f"""
@@ -117,6 +180,7 @@ class RoleAssignment(Module):
 
         elif component_type == discord.ComponentType.button.value:
             await self._callbacks.on_select_menu_callback(interaction)
+
     
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
