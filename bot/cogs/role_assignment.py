@@ -90,7 +90,24 @@ class RoleAssignmentCallbacks:
 
         guild = interaction.guild
         member = interaction.user
-        role = guild.get_role(role_id)
+
+        role = None
+        try:
+            role = guild.get_role(role_id) or await guild.fetch_role(role_id)
+
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                f"**Error:** Missing Permissions.\nPlease make sure i have **Manage Roles** permission.",
+                ephemeral=True
+            )
+            return
+
+        if role is None:
+            await interaction.response.send_message(
+                f"**Error:** Role <@&{role_id}>({role_id}) not found.",
+                ephemeral=True
+            )
+            return
 
         user_facing_message = ""
 
@@ -106,7 +123,10 @@ class RoleAssignmentCallbacks:
         except discord.Forbidden:
             user_facing_message = f"**Error:** I do not have permission to add roles. \nPlease make sure i have **Manage Roles** permission and my role is above: {role.mention}"
 
-        await interaction.response.send_message(user_facing_message)
+        await interaction.response.send_message(
+            user_facing_message, 
+            ephemeral=True
+        )
 
     async def on_select_menu_callback(self, interaction: discord.Interaction):
         ...
