@@ -127,9 +127,6 @@ class RoleAssignment(Module):
 
         self._callbacks = RoleAssignmentCallbacks(self)
 
-        self.global_lock = asyncio.Lock()
-        self.update_locks = TTLCache(maxsize=5000, ttl=60)
-
         self.message_ra_cache = TTLCache(maxsize=5000, ttl=300)
         # {
         #     "message_id": {"headers": "hi", "description": "roles!", "roles": [...], "config_version": 1}
