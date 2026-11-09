@@ -600,10 +600,21 @@ class ModuleManagement(commands.Cog):
 
 
     @modules.error
-    async def on_error(self, interaction, error):
-        traceback.print_exception(
-            type(error), error, error.__traceback__
-        )
+    async def on_error(self, i: discord.Interaction, error):
+        text = "Something went wrong"
+        
+        if isinstance(error, app_commands.MissingPermissions):
+            missing_permissions = [
+                mp.replace("_", " ")
+                for mp in error.missing_permissions
+            ]
+
+            text = f"You're missing the following permission: **{', '.join(missing_permissions)}**"
+
+        if i.response.is_done():
+            await i.followup.send(text, ephemeral=True)
+        else:
+            await i.response.send_message(text, ephemeral=True)
         
 
 async def setup(bot: commands.Bot):
