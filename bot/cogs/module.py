@@ -605,7 +605,7 @@ class ModuleManagement(commands.Cog):
         
         if isinstance(error, app_commands.MissingPermissions):
             missing_permissions = [
-                mp.replace("_", " ")
+                mp.replace("_", " ").title()
                 for mp in error.missing_permissions
             ]
 
