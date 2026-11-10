@@ -99,17 +99,7 @@ class RoleAssignmentCallbacks:
 
         guild = interaction.guild
         
-        bot_member = guild.me
         member = interaction.user
-
-        bot_perms = bot_member.guild_permissions
-        
-        if not bot_perms.manage_roles:
-            await interaction.response.send_message(
-                f"**Error:** Missing Permissions.\nPlease make sure i have **Manage Roles** permission.",
-                ephemeral=True
-            )
-            return
 
         role = await self._get_role(guild, int(role_id))
 
@@ -157,18 +147,8 @@ class RoleAssignmentCallbacks:
         select_menu = message.components[3]
 
         guild = interaction.guild
-
-        bot_member = guild.me
+        
         member = interaction.user
-
-        bot_perms = bot_member.guild_permissions
-
-        if not bot_perms.manage_roles:
-            await interaction.response.send_message(
-                f"**Error:** Missing Permissions.\nPlease make sure i have **Manage Roles** permission.",
-                ephemeral=True
-            )
-            return
 
         member_roles = set(member.roles)
         panel_roles = set([
@@ -279,6 +259,14 @@ class RoleAssignment(Module):
             await interaction.response.send_message(
                 f"## ⚠️ Error: Module Disabled"
                 f"This module is disabled. Please run /modules to enable **{self.module_name}**"
+            )
+            return
+
+        bot_perms = interaction.guild.me.guild_permissions
+        if not bot_perms.manage_roles:
+            await interaction.response.send_message(
+                f"**Error:** Missing Permissions.\nPlease make sure i have **Manage Roles** permission.",
+                ephemeral=True
             )
             return
 
