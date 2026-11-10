@@ -102,7 +102,9 @@ class RoleAssignmentCallbacks:
         bot_member = guild.me
         member = interaction.user
 
-        if not bot_member.manage_roles:
+        bot_perms = bot_member.guild_permissions
+        
+        if not bot_perms.manage_roles:
             await interaction.response.send_message(
                 f"**Error:** Missing Permissions.\nPlease make sure i have **Manage Roles** permission.",
                 ephemeral=True
@@ -158,6 +160,15 @@ class RoleAssignmentCallbacks:
 
         bot_member = guild.me
         member = interaction.user
+
+        bot_perms = bot_member.guild_permissions
+
+        if not bot_perms.manage_roles:
+            await interaction.response.send_message(
+                f"**Error:** Missing Permissions.\nPlease make sure i have **Manage Roles** permission.",
+                ephemeral=True
+            )
+            return
 
         member_roles = set(member.roles)
         panel_roles = set([
