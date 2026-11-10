@@ -102,6 +102,13 @@ class RoleAssignmentCallbacks:
             )
             return
 
+        except discord.NotFound:
+            await interaction.response.send_message(
+                f"**Error:** Role <@&{role_id}>({role_id}) not found.",
+                ephemeral=True
+            )
+            return
+
         if role is None:
             await interaction.response.send_message(
                 f"**Error:** Role <@&{role_id}>({role_id}) not found.",
