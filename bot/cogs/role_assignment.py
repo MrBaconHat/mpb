@@ -201,10 +201,15 @@ class RoleAssignmentCallbacks:
             )
             return
 
+        text = "Successfully updated your roles!"
+        
+        if len(to_add) > 0:
+            text += f"\n**Added:** {', '.join(f'<@&{role_id}>' for role_id in to_add)}"
+        if len(to_remove) > 0:
+            text += f"\n**Removed:** {', '.join(f'<@&{role_id}>' for role_id in to_remove)}"
+            
         await interaction.response.send_message(
-            f"Successfully updated your roles!"
-            f"\n**Added:** {', '.join(f'<@&{role_id}>' for role_id in to_add)}"
-            f"\n**Removed:** {', '.join(f'<@&{role_id}>' for role_id in to_remove)}",
+            text,
             ephemeral=True
         )
 
