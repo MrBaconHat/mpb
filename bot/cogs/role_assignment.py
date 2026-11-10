@@ -187,7 +187,7 @@ class RoleAssignmentCallbacks:
 
         except discord.Forbidden:
             await interaction.response.send_message(
-                f"**Error:** I do not have permission to mamage roles. \nPlease make sure i have **Manage Roles** permission and my role is above the role you want me to manage.",
+                f"**Error:** I do not have permission to manage roles. \nPlease make sure i have **Manage Roles** permission and my role is above the role you want me to manage.",
                 ephemeral=True
             )
             return
