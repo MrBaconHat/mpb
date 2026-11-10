@@ -266,8 +266,9 @@ class RoleAssignment(Module):
 
         if not await self.is_enabled(interaction.guild.id):
             await interaction.response.send_message(
-                f"## ⚠️ Error: Module Disabled"
-                f"This module is disabled. Please run /modules to enable **{self.module_name}**"
+                f"## ⚠️ Error: Module Disabled\n"
+                f"- This module is disabled. Please run /modules to enable **{self.module_name}**",
+                ephemeral=True
             )
             return
 
