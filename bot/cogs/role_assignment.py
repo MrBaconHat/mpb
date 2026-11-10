@@ -153,20 +153,20 @@ class RoleAssignmentCallbacks:
         
         member = interaction.user
 
-        member_roles = set([
+        member_roles = {
             role.id
             for role in member.roles
-        ])
-        panel_roles = set([
+        }
+        panel_roles = {
             int(option.value)
             for option in select_menu.options
             if option.value.isdigit()
-        ])
-        selected_roles = set([
+        }
+        selected_roles = {
             int(role_id) 
             for role_id in values
             if role_id.isdigit()
-        ])
+        }
 
         to_add = (panel_roles & selected_roles) - member_roles 
         to_remove = (panel_roles & member_roles) - selected_roles
