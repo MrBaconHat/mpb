@@ -153,7 +153,10 @@ class RoleAssignmentCallbacks:
         
         member = interaction.user
 
-        member_roles = set(member.roles)
+        member_roles = set([
+            role.id
+            for role in member.roles
+        ])
         panel_roles = set([
             int(option.value)
             for option in select_menu.options
