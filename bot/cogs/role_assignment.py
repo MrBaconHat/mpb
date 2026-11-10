@@ -244,6 +244,7 @@ class RoleAssignment(Module):
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: discord.Interaction):
+        print("select menu")
         if interaction.guild is None:
             return
             
@@ -257,6 +258,8 @@ class RoleAssignment(Module):
 
         if not custom_id.startswith("ra:"):
             return
+
+        print("role assignment yay")
 
         if not await self.is_enabled(interaction.guild.id):
             await interaction.response.send_message(
@@ -278,7 +281,7 @@ class RoleAssignment(Module):
         if component_type == discord.ComponentType.button.value:
             await self._callbacks.on_button_callback(interaction)
 
-        elif component_type == discord.ComponentType.button.value:
+        elif component_type == discord.ComponentType.string_select.value:
             await self._callbacks.on_select_menu_callback(interaction)
 
     
