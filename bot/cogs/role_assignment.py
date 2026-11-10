@@ -144,7 +144,10 @@ class RoleAssignmentCallbacks:
             return
 
         message = interaction.message
-        select_menu = message.components[3]
+        
+        container = message.components[0]
+        action_row = container.children[2]
+        select_menu = action_row.children[0]
 
         guild = interaction.guild
         
