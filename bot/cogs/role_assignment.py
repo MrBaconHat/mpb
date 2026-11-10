@@ -168,28 +168,34 @@ class RoleAssignmentCallbacks:
             if role_id.isdigit()
         ])
 
+        to_add = (panel_roles & selected_roles) - member_roles 
         to_remove = (panel_roles & member_roles) - selected_roles
 
-        try:
-            await member.remove_roles(
-                *[
-                    role
-                    for r in to_remove
-                    if (role := await self._get_role(guild, int(r))) is not None
-                ],
-                reason="Role Assignment",
-                atomic=False
-            )
+        print("roles to add:", to_add)
+        print("roles to remove:", to_remove)
 
-            await member.add_roles(
-                *[
-                    role
-                    for r in selected_roles
-                    if (role := await self._get_role(guild, int(r))) is not None
-                ],
-                reason="Role Assignment",
-                atomic=False
-            )
+        try:
+            if len(to_remove) > 0:
+                await member.remove_roles(
+                    *[
+                        role
+                        for r in to_remove
+                        if (role := await self._get_role(guild, int(r))) is not None
+                    ],
+                    reason="Role Assignment",
+                    atomic=False
+                )
+
+            if len(to_add) > 0:
+                await member.add_roles(
+                    *[
+                        role
+                        for r in to_add
+                        if (role := await self._get_role(guild, int(r))) is not None
+                    ],
+                    reason="Role Assignment",
+                    atomic=False
+                )
 
         except discord.Forbidden:
             await interaction.response.send_message(
@@ -200,8 +206,8 @@ class RoleAssignmentCallbacks:
 
         await interaction.response.send_message(
             f"Successfully updated your roles!"
-            f"**Added:** {', '.join(f'<@&{role_id}>' for role_id in selected_roles)}"
-            f"**Removed:** {', '.join(f'<@&{role_id}>' for role_id in to_remove)}",
+            f"\n**Added:** {', '.join(f'<@&{role_id}>' for role_id in to_add)}"
+            f"\n**Removed:** {', '.join(f'<@&{role_id}>' for role_id in to_remove)}",
             ephemeral=True
         )
 
