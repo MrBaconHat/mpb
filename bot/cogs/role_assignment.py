@@ -171,9 +171,6 @@ class RoleAssignmentCallbacks:
         to_add = (panel_roles & selected_roles) - member_roles 
         to_remove = (panel_roles & member_roles) - selected_roles
 
-        print("roles to add:", to_add)
-        print("roles to remove:", to_remove)
-
         try:
             if len(to_remove) > 0:
                 await member.remove_roles(
@@ -253,7 +250,6 @@ class RoleAssignment(Module):
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: discord.Interaction):
-        print("select menu")
         if interaction.guild is None:
             return
             
@@ -267,8 +263,6 @@ class RoleAssignment(Module):
 
         if not custom_id.startswith("ra:"):
             return
-
-        print("role assignment yay")
 
         if not await self.is_enabled(interaction.guild.id):
             await interaction.response.send_message(
