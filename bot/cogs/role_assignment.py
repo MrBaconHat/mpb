@@ -138,7 +138,75 @@ class RoleAssignmentCallbacks:
         )
 
     async def on_select_menu_callback(self, interaction: discord.Interaction):
-        ...
+        custom_id = interaction.data["custom_id"]
+        values = interaction.data.get("values", [])
+        
+        split = custom_id.split(":")
+        
+        try:
+            prefix = split[0]
+            version = split[1]
+            config_version = split[2]
+            
+        except IndexError:
+            return
+
+        message = interaction.message
+        select_menu = message.components[3]
+
+        guild = interaction.guild
+
+        bot_member = guild.me
+        member = interaction.user
+
+        member_roles = set(member.roles)
+        panel_roles = set([
+            int(option.value)
+            for option in select_menu.options
+            if option.value.isdigit()
+        ])
+        selected_roles = set([
+            int(role_id) 
+            for role_id in values
+            if role_id.isdigit()
+        ])
+
+        to_remove = (panel_roles & member_roles) - selected_roles
+
+        try:
+            await member.remove_roles(
+                [
+                    role
+                    for r in to_remove
+                    if (role := await self._get_role(guild, int(r))) is not None
+                ],
+                reason="Role Assignment",
+                atomic=False
+            )
+
+            await member.add_roles(
+                [
+                    role
+                    for r in selected_roles
+                    if (role := await self._get_role(guild, int(r))) is not None
+                ],
+                reason="Role Assignment",
+                atomic=False
+            )
+
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                f"**Error:** I do not have permission to mamage roles. \nPlease make sure i have **Manage Roles** permission and my role is above the role you want me to manage.",
+                ephemeral=True
+            )
+            return
+
+        await interaction.response.send_message(
+            f"Successfully updated your roles!"
+            f"**Added:** {', '.join(f'<@&{role_id}>' for role_id in selected_roles)}"
+            f"**Removed:** {', '.join(f'<@&{role_id}>' for role_id in to_remove)}",
+            ephemeral=True
+        )
 
 
 class RoleAssignment(Module):
