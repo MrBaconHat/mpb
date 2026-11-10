@@ -84,30 +84,32 @@ class RoleAssignmentCallbacks:
 
         self.extract = DataExtractor()
 
+    async def _get_role(self, guild: discord.Guild, role_id: int) -> discord.Role | None:
+        try:
+            role = guild.get_role(role_id) or await guild.fetch_role(role_id)
+            
+        except (discord.Forbidden, discord.NotFound):
+            return None
+            
+        return role
+
     async def on_button_callback(self, interaction: discord.Interaction):
         custom_id = interaction.data["custom_id"]
         prefix, version, config_version, role_id = self.extract.extract(custom_id)
 
         guild = interaction.guild
+        
+        bot_member = guild.me
         member = interaction.user
 
-        role = None
-        try:
-            role = guild.get_role(role_id) or await guild.fetch_role(role_id)
-
-        except discord.Forbidden:
+        if not bot_member.manage_roles:
             await interaction.response.send_message(
                 f"**Error:** Missing Permissions.\nPlease make sure i have **Manage Roles** permission.",
                 ephemeral=True
             )
             return
 
-        except discord.NotFound:
-            await interaction.response.send_message(
-                f"**Error:** Role <@&{role_id}>({role_id}) not found.",
-                ephemeral=True
-            )
-            return
+        role = await self._get_role(guild, int(role_id))
 
         if role is None:
             await interaction.response.send_message(
