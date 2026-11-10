@@ -201,16 +201,16 @@ class RoleAssignmentCallbacks:
             )
             return
 
-        text = "Successfully updated your roles!"
+        text = "Successfully updated your roles!\n\n"
         
         if len(to_add) > 0:
-            text += f"\n**Added:** {', '.join(f'<@&{role_id}>' for role_id in to_add)}"
+            text += f"**Added:** {', '.join(f'<@&{role_id}>' for role_id in to_add)}\n"
         if len(to_remove) > 0:
-            text += f"\n**Removed:** {', '.join(f'<@&{role_id}>' for role_id in to_remove)}"
+            text += f"**Removed:** {', '.join(f'<@&{role_id}>' for role_id in to_remove)}\n\n"
 
         current_roles = ((member_roles & panel_roles) ^ to_remove) | to_add
 
-        text += f"\n\n**Current Roles:** {', '.join(f'<@&{role_id}>' for role_id in current_roles) if len(current_roles) > 0 else 'You havent selected any roles yet.'}"
+        text += f"**Current Roles:** {', '.join(f'<@&{role_id}>' for role_id in current_roles) if len(current_roles) > 0 else 'You havent selected any roles yet.'}"
             
         await interaction.response.send_message(
             text,
