@@ -169,7 +169,7 @@ class RoleAssignmentCallbacks:
 
         try:
             await member.remove_roles(
-                [
+                *[
                     role
                     for r in to_remove
                     if (role := await self._get_role(guild, int(r))) is not None
@@ -179,7 +179,7 @@ class RoleAssignmentCallbacks:
             )
 
             await member.add_roles(
-                [
+                *[
                     role
                     for r in selected_roles
                     if (role := await self._get_role(guild, int(r))) is not None
