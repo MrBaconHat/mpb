@@ -276,6 +276,10 @@ class RoleAssignment(Module):
             return
 
         if not await self.is_enabled(interaction.guild.id):
+            await interaction.response.send_message(
+                f"## ⚠️ Error: Module Disabled"
+                f"This module is disabled. Please run /modules to enable **{self.module_name}**"
+            )
             return
 
         component_type = interaction.data["component_type"]
