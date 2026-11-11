@@ -171,28 +171,25 @@ class RoleAssignmentCallbacks:
         to_add = (panel_roles & selected_roles) - member_roles 
         to_remove = (panel_roles & member_roles) - selected_roles
 
-        try:
-            if len(to_remove) > 0:
-                await member.remove_roles(
-                    *[
-                        role
-                        for r in to_remove
-                        if (role := await self._get_role(guild, int(r))) is not None
-                    ],
-                    reason="Role Assignment",
-                    atomic=False
-                )
+        final_roles_state = [
+            role
+            for role in member.roles
+            if role.id not in to_remove
+        ]
 
-            if len(to_add) > 0:
-                await member.add_roles(
-                    *[
-                        role
-                        for r in to_add
-                        if (role := await self._get_role(guild, int(r))) is not None
-                    ],
-                    reason="Role Assignment",
-                    atomic=False
-                )
+        roles_to_add = [
+            role
+            for r in to_add
+            if (role := await self._get_role(guild, r)) is not None
+        ]
+        if len(roles_to_add) > 0:
+            final_roles_state.extend(roles_to_add)
+
+        try:
+            await member.edit(
+                roles=final_roles_state,
+                reason="Role Assignment"
+            )
 
         except discord.Forbidden:
             await interaction.response.send_message(
