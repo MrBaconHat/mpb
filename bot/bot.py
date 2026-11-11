@@ -10,7 +10,7 @@ init(autoreset=True)
 import discord
 from discord.ext import commands
 
-from bot.database import Database
+from bot.core.database import Database
 
 
 class MyBot(commands.Bot):
