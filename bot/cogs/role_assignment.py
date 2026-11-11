@@ -253,6 +253,9 @@ class RoleAssignment(Module):
 
         await self.db.commit()
     
+    async def cog_load(self):
+        await self.initialize()
+    
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: discord.Interaction):
