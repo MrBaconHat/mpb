@@ -6,7 +6,7 @@ import discord
 from discord import app_commands, ui
 from discord.ext import commands
 
-from bot.cogs.module import Module
+from bot.core.module import Module
 
 
 class ConfigMenu(ui.LayoutView):
