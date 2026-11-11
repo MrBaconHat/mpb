@@ -105,7 +105,7 @@ class RoleAssignmentCallbacks:
 
         if role is None:
             await interaction.response.send_message(
-                f"**Error:** Role <@&{role_id}>({role_id}) not found.",
+                f"## ⚠️ Error: Unknown Role\n- Role <@&{role_id}>({role_id}) not found.",
                 ephemeral=True
             )
             return
@@ -122,7 +122,7 @@ class RoleAssignmentCallbacks:
                 user_facing_message = f"**Successfully:** Added {role.mention} to you."
                 
         except discord.Forbidden:
-            user_facing_message = f"**Error:** I do not have permission to add roles. \nPlease make sure i have **Manage Roles** permission and my role is above: {role.mention}"
+            user_facing_message = f"## ⚠️ Error: Missing Permission\n- Please make sure i have **Manage Roles** permission and my role is above: {role.mention}"
 
         await interaction.response.send_message(
             user_facing_message, 
@@ -193,7 +193,7 @@ class RoleAssignmentCallbacks:
 
         except discord.Forbidden:
             await interaction.response.send_message(
-                f"**Error:** I do not have permission to manage roles. \nPlease make sure i have **Manage Roles** permission and my role is above the role you want me to manage.",
+                f"## ⚠️ Error: Missing Permission\n- Please make sure i have **Manage Roles** permission and my role is above the role you want me to manage.",
                 ephemeral=True
             )
             return
@@ -281,7 +281,7 @@ class RoleAssignment(Module):
         bot_perms = interaction.guild.me.guild_permissions
         if not bot_perms.manage_roles:
             await interaction.response.send_message(
-                f"**Error:** Missing Permissions.\nPlease make sure i have **Manage Roles** permission.",
+                f"## ⚠️ Error: Missing Permission\n- Please make sure i have **Manage Roles** permission.",
                 ephemeral=True
             )
             return
